@@ -1,0 +1,107 @@
+{
+  "workflowApiVersion": "1.1",
+  "metaData": {
+    "icon": "images/iconsms1.png",
+    "iconSmall": "images/iconsms1.png",
+    "category": "custom",
+    "version": "1.0",
+    "isConfigured": true
+  },
+  "type": "REST",
+  "lang": {
+    "en-US": {
+      "name": "Clyx SMS",
+      "description": "Activité REST personnalisée pour envoyer des SMS via SFMC"
+    }
+  },
+  "arguments": {
+    "execute": {
+      "inArguments": [
+        { "contactKey": "" },
+        { "phoneField": "" },
+        { "messageContent": "" },
+        { "messageType": "" },
+        { "buid": "" }
+      ],
+      "outArguments": [],
+      "url": "https://clyxsms.agencelycs.com/execute",
+      "verb": "POST",
+      "format": "json",
+      "useJwt": false,
+      "timeout": 240000
+    }
+  },
+  "configurationArguments": {
+    "save": {
+      "url": "https://clyxsms.agencelycs.com/save",
+      "verb": "POST",
+      "useJwt": false
+    },
+    "publish": {
+      "url": "https://clyxsms.agencelycs.com/publish",
+      "verb": "POST",
+      "useJwt": false
+    },
+    "validate": {
+      "url": "https://clyxsms.agencelycs.com/validate",
+      "verb": "POST",
+      "useJwt": false
+    },
+    "stop": {
+      "url": "https://clyxsms.agencelycs.com/stop",
+      "verb": "POST",
+      "useJwt": false
+    }
+  },
+  "userInterfaces": {
+    "configModal": {
+      "height": 650,
+      "width": 900,
+      "fullscreen": false
+    }
+  },
+  "schema": {
+    "arguments": {
+      "execute": {
+        "inArguments": [
+          {
+            "contactKey": {
+              "dataType": "Text",
+              "isNullable": false,
+              "direction": "in"
+            }
+          },
+          {
+            "phoneField": {
+              "dataType": "Text",
+              "isNullable": false,
+              "direction": "in"
+            }
+          },
+          {
+            "messageContent": {
+              "dataType": "Text",
+              "isNullable": false,
+              "direction": "in"
+            }
+          },
+          {
+            "messageType": {
+              "dataType": "Text",
+              "isNullable": false,
+              "direction": "in"
+            }
+          },
+          {
+            "buid": {
+              "dataType": "Text",
+              "isNullable": false,
+              "direction": "in"
+            }
+          }
+        ],
+        "outArguments": []
+      }
+    }
+  }
+}
