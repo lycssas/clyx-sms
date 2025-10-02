@@ -58,8 +58,8 @@ jobs:
           script: |
             cd /home/deploy/clyx-sms/
 
-            docker pull papaibrahima/clyxsmslatest:latest
+            sudo docker pull papaibrahima/clyxsmslatest:latest
 
-            docker compose up -d --force-recreate web
+            sudo docker compose up -d --force-recreate web
 
-            docker image prune -f
+            sudo docker image prune -f
