@@ -56,6 +56,13 @@
   width: 50%;
 }
 
+.section-item input {
+  border: 2px solid grey;
+  border-radius: 10px;
+  padding: 10px;
+  width: 47%;
+}
+
 .available-fields option:nth-child(even) {
   background-color: var(--light-pink);
 }
@@ -85,10 +92,38 @@
   text-align: right;
 }
 
-.right-icone{
+.right-icone {
   text-align: left;
   align-self: right;
 }
+
+.align-right {
+  text-align: right;
+  /* background-color: red; */
+  float: right;
+}
+
+.champsPerso {
+  width: 50%;
+  text-align: left;
+  margin: 0;
+  /* background-color: blue; */
+  margin-left: 50%;
+}
+.champsPerso .available-fields {
+  width: 100%;
+}
+
+/* .label-personalisation{
+  text-align: left;
+  margin-left: 50%;
+} */
+
+.align-left {
+  text-align: left;
+}
+
+
 
 .left {
   text-align: left;
@@ -122,6 +157,11 @@
   font-size: 13px;
   margin-top: 5px;
   text-align: left;
+}
+
+#messageContentError {
+  text-align: center;
+  width: 100%;
 }
 
 .detailsms {

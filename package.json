@@ -2,6 +2,7 @@
   "name": "clyx-sms",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "A React application for a custom REST activity to send SMS via SFMC",
   "main": "server.js",
   "dependencies": {

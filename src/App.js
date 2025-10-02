@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import PhoneMock from "./PhoneMock"; // suppose que tu as déjà ce composant
+import PhoneMock from "./PhoneMock.js"; // suppose que tu as déjà ce composant
 import phoneIcone from "./img/img-2.png";
 import personIcone from "./img/img-3.png";
 import textIcone from "./img/img-1.png";
 import logo from "./img/clyxlogo.png";
+import sms from "./img/sms.png";
+import campagne from "./img/campagn.png";
 
 export default function App() {
   // -------- State
@@ -22,52 +24,43 @@ export default function App() {
   // -------- Templates (React garde la main là-dessus)
   const TEMPLATES = useMemo(
     () => [
+      // Template 1 : Confirmation de vol (Adapté avec clés formatées)
       {
         id: "confirm",
-        label: "✈️ Confirmation de vol",
-        text: "Bonjour %%FirstName%%, votre vol %%flightNumber%% Air Côte d’Ivoire du %%Old_Departure_DateTime%% à %%New_Departure_Time%% est confirmé. Enregistrez-vous sur https://aircotedivoire.com.",
+        label: "✈️ Confirmation de Vol",
+        // Utilisation des clés formatées TECH_Nvl
+        text: "Bonjour %%CampaignMember:Name%%, votre vol %%CampaignMember:Campaign:NumeroVolNew__c%% Air Côte d’Ivoire de la route %%CampaignMember:Campaign:RouteNew__c%% est confirmé. Départ le %%TECH_NvlDateDepart__c%% à %%TECH_NvlHeureDepart__c%%. Enregistrez-vous sur https://aircotedivoire.com.",
       },
+
+      // Template 2 : Rappel avant départ (Adapté avec clés formatées)
       {
         id: "reminder",
-        label: "🕒 Rappel avant départ",
-        text: "Rappel : vol %%flightNumber%% le %%Old_Departure_DateTime%% à %%New_Departure_Time%%. Merci d’arriver 2h avant le départ. Bon voyage !",
+        label: "🕒 Rappel avant Départ",
+        // Utilisation des champs formatés pour l'heure et le numéro de vol
+        text: "Rappel : vol %%CampaignMember:Campaign:NumeroVolNew__c%% le %%TECH_NvlDateDepart__c%% à %%TECH_NvlHeureDepart__c%%. Merci d’arriver 2h avant le départ. Bon voyage !",
       },
+
+      // Template 3 : Offre spéciale (Clé de date formatée utilisée pour l'échéance)
       {
         id: "promo",
-        label: "💡 Offre spéciale",
-        text: "Air Côte d’Ivoire : -20% si vous réservez avant %%New_Departure_DateTime%%. Détails sur https://aircotedivoire.com.",
+        label: "💡 Offre Spéciale",
+        // Utilisation d'une clé formatée comme date d'échéance
+        text: "Air Côte d’Ivoire : -20% si vous réservez avant %%TECH_NvlDateDepart__c%%. Détails sur https://aircotedivoire.com.",
+      },
+
+      // Nouveaux Templates de Perturbation (Clés formatées utilisées)
+
+      {
+        id: "delay_info",
+        label: "⚠️ Retard de Vol - Information",
+        text: "M/Mme %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%TECH_OldDateDepart__c%% (initialement prévu à %%TECH_OldHeureDepart__c%%), connaîtra un retard.\n• Nouvelle heure de départ : %%TECH_NvlHeureDepart__c%% \n• Convocation : %%TECH_NvlHeureDepart__c%% (heure - 2h à gérer par la DE/logique)\n• Arrivée estimée : %%TECH_NvlHeureArrive__c%%\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et restons à votre entière disposition.\nCordialement,\nService Réservation\nAir Côte d’Ivoire",
+      },
+      {
+        id: "modification_escale",
+        label: "✈️ Modification de Vol - Escale",
+        text: "M/Mme %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%TECH_OldDateDepart__c%% est modifié.\n• Nouvelle heure de départ : %%TECH_NvlHeureDepart__c%% avec une escale à %%CampaignMember:Campaign:Escale__c%% \n• Convocation : %%TECH_NvlHeureDepart__c%% (heure - 2h à gérer par la DE/logique)\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et vous remercions de votre compréhension.\nCordialement,\nService Réservation\nAir Côte d’Ivoire – Abidjan",
       },
     ],
-    []
-  );
-
-  // -------- Valeurs d’exemple pour la preview
-  const SAMPLE_POOL = useMemo(
-    () => ({
-      FirstName: ["XXXXX", "XXXXXX"],
-      LastName: ["XXXXX", "XXXXXX"],
-      flightNumber: ["HFXXX", "HFXXX"],
-      Old_Departure_DateTime: ["XX/XX/XXXX", "XX/XX/XXXX"],
-      CampagnId: ["CMP-XXXXX", "CMP-XXXX"],
-      ContactId: ["CID-XXXXX", "CID-XXXX"],
-      HasResponded: ["Oui", "Non"],
-      RespondedDate: ["XX/XX/XXXX", "XX/XX/XXXX", "XX/XX/XXXX"],
-      DelayMin: ["15", "30", "45", "60"],
-      Phone: ["+XXXXXXXXX", "+XXXXXXXXX"],
-      Email: [
-        "fatima.ngom@example.com",
-        "ibrahima.traore@example.com",
-        "rosette.diaw@example.com",
-        "mariama.kone@example.com",
-        "mathieu.ndiaye@example.com",
-      ],
-      APD: ["Abidjan", "Dakar", "Bamako"],
-      APA: ["Paris", "Bouaké", "San Pedro"],
-      New_Departure_Time: ["08:35", "13:45", "20:10", "06:55"],
-      Old_Departure_Time: ["08:00", "13:00", "20:00", "06:30"],
-      New_Departure_DateTime: ["XX/XX/XXXX 08:35"],
-      Id: ["CK-XXXXX", "CK-XXXXX"],
-    }),
     []
   );
 
@@ -86,15 +79,8 @@ export default function App() {
   // Remplacements pour l’aperçu (non destructif du message)
   const renderPreviewText = (text) => {
     if (!text) return "";
-    // {{Event.DE....FirstName}} -> prend le dernier segment en clé
-    let out = text.replace(/\{\{[^}]*?\.([A-Za-z0-9_]+)\}\}/g, (_, last) =>
-      sampleForKey(last)
-    );
-    // %%FirstName%% -> remplace par échantillon
-    out = out.replace(/%%\s*([A-Za-z0-9_]+)\s*%%/g, (_, key) =>
-      sampleForKey(key)
-    );
-    // URLs -> slug démo
+    let out = text.replace(/%%[^%]+%%/g, "XXXXX");
+    // 2) URLs -> slug démo
     out = out.replace(URL_REGEX, () => sampleUrlForSlug());
     return out;
   };
@@ -131,7 +117,18 @@ export default function App() {
     const id = e.target.value;
     setSelectedTemplate(id);
     const tpl = TEMPLATES.find((t) => t.id === id);
-    if (tpl) setMessage(tpl.text);
+    // if (tpl) setMessage(tpl.text);
+    if (tpl) {
+      setMessage(tpl.text);
+      // IMPORTANT : notifier le script Postmonger que le contenu a changé
+      // On attend le rendu React puis on émet un 'input' synthétique
+      setTimeout(() => {
+        const node = document.getElementById("messageContent");
+        if (node) {
+          node.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }, 0);
+    }
   };
 
   const onMessageChange = (e) => setMessage(e.target.value);
@@ -142,12 +139,7 @@ export default function App() {
     <div className="App">
       <div id="container">
         <div className="header">
-          <img
-            src={logo}
-            width={40}
-            alt="Lycs Logo"
-            className="logo"
-          />
+          <img src={logo} width={40} alt="Lycs Logo" className="logo" />
         </div>
 
         <div className="section">
@@ -166,6 +158,41 @@ export default function App() {
               {/* Les options sont injectées par customActivity.js */}
             </select>
             <div id="phoneFieldError" className="error"></div>
+          </div>
+          {/* Nom du sms_$ */}
+          <div className="section-item">
+            <div htmlFor="phoneField" className="label-phone">
+              <img
+                src={sms}
+                width={30}
+                alt="Icône téléphone"
+                className="icon"
+              />
+            </div>
+            <input
+              id="smsName"
+              className="available-fields"
+              placeholder="Nom du sms"
+            />
+            <div id="smsNameError" className="error"></div>
+          </div>
+
+          {/* Nom du sms_$ */}
+          <div className="section-item">
+            <div htmlFor="phoneField" className="label-phone">
+              <img
+                src={campagne}
+                width={30}
+                alt="Icône téléphone"
+                className="icon"
+              />
+            </div>
+            <input
+              id="campaignName"
+              className="available-fields"
+              placeholder="Nom de la campagne"
+            />
+            <div id="smsNameError" className="error"></div>
           </div>
 
           {/* champ du template (géré par React uniquement) */}
@@ -193,24 +220,24 @@ export default function App() {
             </select>
             <div id="smsTemplateError" className="error"></div>
           </div>
-
           {/* champs perso (remplis par AMD) */}
-          <div className="section-item right">
+          <div className="section-item right align-right">
             <label className="label-message">MESSAGE</label>
-            <div htmlFor="templateField" className="label-phone">
-              <img
-                src={personIcone}
-                width={35}
-                alt="Icône texte"
-                className="icon"
-              />
+            <div className="champsPerso">
+              <div htmlFor="templateField" className="label-personalisation">
+                <img
+                  src={personIcone}
+                  width={35}
+                  alt="Icône texte"
+                  className="icon"
+                />
+              </div>
+              <select id="availableFields" className="available-fields">
+                <option value="">Personalisation</option>
+                {/* Options injectées par customActivity.js */}
+              </select>
             </div>
-            <select id="availableFields" className="available-fields">
-              <option value="">Personalisation</option>
-              {/* Options injectées par customActivity.js */}
-            </select>
           </div>
-
           {/* corps du message (contrôlé par React) */}
           <div className="section-item message-area">
             <textarea
@@ -228,7 +255,6 @@ export default function App() {
             </div>
             <div id="messageContentError" className="error"></div>
           </div>
-
           {/* bouton preview */}
           <div className="btn-section">
             <button
