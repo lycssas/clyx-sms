@@ -46,10 +46,20 @@ function formatE164(number) {
 app.post("/execute", async (req, res) => {
   console.log("Execute endpoint called");
   console.log("informations reçues dans le corps de la requête:");
-  console.log(req.body);
   try {
+    // console.log("Processing /execute with payload:", req.body);
     const args = req.body.inArguments?.[0] || {};
-    const { phoneField, messageContent, contactKey, buid } = args;
+    const {
+      phoneField,
+      messageContent,
+      contactKey,
+      buid,
+      campaignName,
+      smsName,
+    } = args;
+    const versionId = req.body?.definitionInstanceId || "";
+    const activityId = req.body?.activityId || "";
+    const journeyId = req.body?.journeyId || "";
 
     if (!phoneField || !messageContent || !contactKey || !buid) {
       return res.status(200).json({ outArguments: [{ statusCode: "400" }] });
@@ -57,9 +67,10 @@ app.post("/execute", async (req, res) => {
 
     const countryPrefix = getCountryPrefix(formatE164(phoneField));
     if (!countryPrefix) {
-      console.log("Préfixe pays non trouvé pour le numéro:", phoneField);
       return res.status(200).json({ outArguments: [{ statusCode: "422" }] });
     }
+
+    
     // 1. Log DB
     const { id } = await insertPending({
       contactKey: contactKey,
@@ -67,9 +78,15 @@ app.post("/execute", async (req, res) => {
       message: messageContent,
       country: countryPrefix,
       buid: buid,
+      versionId: versionId,
+      activityId: activityId,
+      journeyId: journeyId,
+      campaignName: campaignName,
+      smsName: smsName,
+      smsId: `SMS_${versionId}`,
+      smsCount: Math.max(1, Math.ceil(messageContent.length / 160)),
     });
 
-    console.log("Pending SMS record inserted with ID:", id);
 
     const bodyMessage = await rewriteBody(messageContent, id);
 
@@ -92,7 +109,6 @@ app.post("/execute", async (req, res) => {
       ],
     };
 
-    console.log("Sending SMS via LAfricaMobile =>", payload);
 
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
@@ -100,7 +116,6 @@ app.post("/execute", async (req, res) => {
       { timeout: 1200000 }
     );
 
-    console.log("LAfricaMobile response:", response.data);
 
     return res.status(200).json({ outArguments: [{ statusCode: "200" }] });
   } catch (err) {
@@ -119,24 +134,17 @@ app.post("/execute", async (req, res) => {
 
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
-  console.log("Dlr endpoint called pour tester les accusées de réception");
-  console.log("Query params:", req.query);
   const { push_id, to, ret_id, status } = req.query;
-  console.log(
-    `DLR : push=${push_id}  to=${to}  ret_id=${ret_id}  status=${status}`
-  );
+  
   try {
     const numberPart = ret_id.split("_")[1];
-    console.log("Extracted ID from ret_id:", numberPart);
     // const rec = await findLastPendingByPhone(to);
     const rec = await findLastPendingById(numberPart);
     if (!rec) {
-      console.log(`No pending record found for phone: ${to}`);
       return res.sendStatus(200);
     }
 
     await updateDlrStatus({ id: rec.id, rawStatus: status, pushId: push_id });
-    console.log(`DLR updated for record ID: ${rec.id}`);
 
     res.sendStatus(200); // Important : répondre 200 rapidement
   } catch (err) {
@@ -149,22 +157,18 @@ app.get("/recept", async (req, res) => {
 
 // Routes de configuration Journey Builder
 app.post("/save", (req, res) => {
-  console.log("Save endpoint called");
   res.status(200).json({ success: true });
 });
 
 app.post("/publish", (req, res) => {
-  console.log("Publish endpoint called");
   res.status(200).json({ success: true });
 });
 
 app.post("/validate", (req, res) => {
-  console.log("Validate endpoint called");
   res.status(200).json({ success: true });
 });
 
 app.post("/stop", (req, res) => {
-  console.log("Stop endpoint called");
   res.status(200).json({ success: true });
 });
 
@@ -186,9 +190,7 @@ app.get("*", (_, res) => res.sendFile(path.join(buildDir, "index.html")));
 
 // Logs pour toutes les requêtes
 app.use((err, req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   if (req.body && Object.keys(req.body).length > 0) {
-    console.log("Body:", JSON.stringify(req.body, null, 2));
   }
   logger.error("Erreur Express non gérée", { stack: err.stack });
   // if (err) {
@@ -202,7 +204,7 @@ app.use((err, req, res, next) => {
 });
 
 // Démarrer le serveur
-app.listen(PORT, "0.0.0.0", async () => {
+app.listen(PORT, "localhost", async () => {
   try {
     logger.info(`Serveur démarré sur le port ${PORT}`);
     console.log(`Serveur démarré sur le port ${PORT}`);

@@ -4,7 +4,10 @@
 /node_modules
 /.pnp
 .pnp.js
+fly.toml
 
+.vscode
+/logs
 # testing
 /coverage
 

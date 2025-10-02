@@ -1,10 +1,10 @@
 define(["postmonger"], function (Postmonger) {
-  ("use strict");
+  "use strict";
 
   var connection = new Postmonger.Session();
   var payload = {};
   var schemaFields = [];
-  var fieldMappings = {}; // shortName -> fullPath (ex: FirstName -> Event.DE...FirstName)
+  var fieldMappings = {}; // shortName -> fullPath
   var buid = null;
 
   $(window).ready(onRender);
@@ -12,26 +12,86 @@ define(["postmonger"], function (Postmonger) {
   connection.on("initActivity", initialize);
   connection.on("clickedNext", save);
   connection.on("requestedSchema", onRequestedSchema);
-
-  connection.on("requestedTokens", async function (t) {
-    // t peut contenir token, MID, etc.
+  connection.on("requestedTokens", function (t) {
     if (t && t.MID) buid = t.MID;
   });
 
-  /* ---------- Helpers tokens ---------- */
-
-  // --- IMPORTANT : fait comprendre le changement à React ---
+  // ---------- Helper: synchroniser React (textarea contrôlé) ----------
   function setReactValue(el, value) {
-    // Utilise le setter natif de HTMLTextAreaElement
+    // setter natif pour mettre à jour le value tracker de React
     const setter = Object.getOwnPropertyDescriptor(
       HTMLTextAreaElement.prototype,
       "value"
     ).set;
     setter.call(el, value);
-    // Puis déclenche un 'input' qui bubble (capté par React -> onChange)
+    // event 'input' qui bubble (capté par React -> onChange)
     el.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
+  function extractPersonalizationKeys(message) {
+    const found = new Set();
+    if (!message) return [];
+
+    // %%Token%%  (alphanum + _)
+    const reShort = /%%\s*([A-Za-z0-9_:]+)\s*%%/g;
+    let m;
+    while ((m = reShort.exec(message)) !== null) {
+      found.add(m[1]);
+    }
+
+    // {{Full.Path.To.Field}} -> prend le dernier segment "Field"
+    const reFull = /\{\{[^}]*?\.([A-Za-z0-9_]+)\}\}/g;
+    while ((m = reFull.exec(message)) !== null) {
+      found.add(m[1]);
+    }
+
+    console.log("extractPersonalizationKeys", found);
+
+    return Array.from(found);
+  }
+
+  function buildAvailableShortNames(schemaFields, extras = ["ContactKey"]) {
+    const set = new Set();
+    (schemaFields || []).forEach((f) => {
+      const fullPath = f.key || "";
+      const short = (fullPath.split(".").pop() || "").trim();
+      if (short) set.add(short);
+    });
+    (extras || []).forEach((x) => set.add(x));
+    return set;
+  }
+
+  // Valider les champs de la data extension avant de sauvegarder le message
+  function validateMessageTokens(message, schemaFields, opts = {}) {
+    const { caseInsensitive = true, extras = ["ContactKey"] } = opts;
+
+    const tokens = extractPersonalizationKeys(message);
+    const available = buildAvailableShortNames(schemaFields, extras);
+
+    // Si insensible à la casse, on normalise tout en lower
+    if (caseInsensitive) {
+      const lowerAvail = new Set(Array.from(available, (s) => s.toLowerCase()));
+      const missing = tokens.filter((t) => !lowerAvail.has(t.toLowerCase()));
+      const present = tokens.filter((t) => lowerAvail.has(t.toLowerCase()));
+      return {
+        isValid: missing.length === 0,
+        missing,
+        present,
+        allTokens: tokens,
+      };
+    } else {
+      const missing = tokens.filter((t) => !available.has(t));
+      const present = tokens.filter((t) => available.has(t));
+      return {
+        isValid: missing.length === 0,
+        missing,
+        present,
+        allTokens: tokens,
+      };
+    }
+  }
+
+  // ---------- Mapping champs ----------
   function buildFieldMappingsFromSchema() {
     fieldMappings = {};
     (schemaFields || []).forEach((f) => {
@@ -39,7 +99,6 @@ define(["postmonger"], function (Postmonger) {
       const short = (fullPath.split(".").pop() || "").trim();
       if (short) fieldMappings[short] = fullPath;
     });
-    // Optionnel : Contact.Key
     fieldMappings["ContactKey"] = "Contact.Key";
   }
 
@@ -72,47 +131,47 @@ define(["postmonger"], function (Postmonger) {
     });
   }
 
-  /* ---------- UI wiring ---------- */
+  // Quand le contenu du textarea change (tape, collage, OU événement synthétique),
+  // relancer la validation et mettre à jour le bouton "Done"
+  $(document).on("input", "#messageContent", function () {
+    validateAndToggleNext();
+  });
 
+  $(document).on("change", "#smsTemplate", function () {
+    validateAndToggleNext();
+  });
+
+  // ---------- UI ----------
   function onRender() {
+    // Ne pas toucher à #smsTemplate (géré par React)
     connection.trigger("ready");
     connection.trigger("requestSchema");
     connection.trigger("requestTokens");
 
-    // ⚠️ IMPORTANT :
-    // NE PAS gérer ici le select #smsTemplate (laisse React faire).
-    // On ne branche que les éléments pilotés par le schema :
-    // - #availableFields (insertion de token dans le textarea)
-    // - #phoneField (première option si vide)
-
-    // Insertion d'un champ de perso dans le textarea
+    // Insertion de token depuis #availableFields
     $("#availableFields").on("change", function () {
       const fullPath = $(this).val();
       if (!fullPath) return;
-
       const shortName = fullPath.split(".").pop();
       fieldMappings[shortName] = fullPath;
 
-      const shortField = `%%${shortName}%%`;
       const node = document.getElementById("messageContent");
       if (!node) return;
 
       const start = node.selectionStart || (node.value || "").length;
       const before = node.value.substring(0, start);
       const after = node.value.substring(start);
-      node.value = before + shortField + after;
+      const token = `%%${shortName}%%`;
+      const newText = before + token + after;
 
-      // 👉 Synchroniser React
-      // node.dispatchEvent(new Event("input", { bubbles: true }));
-      setReactValue(node, shortMsg);
+      setReactValue(node, newText);
 
-      // replacer le curseur à la fin de l'insert
-      const pos = start + shortField.length;
+      const pos = start + token.length;
       node.setSelectionRange(pos, pos);
       node.focus();
 
-      // reset le select
       $(this).prop("selectedIndex", 0);
+      validateAndToggleNext();
     });
   }
 
@@ -123,6 +182,44 @@ define(["postmonger"], function (Postmonger) {
       $phone.val($phone.find("option:eq(1)").val());
     }
   }
+
+  // Insérer un champ de personnalisation choisi dans le <select>
+  $("#availableFields").on("change", function () {
+    const $select = $(this);
+    const fieldPath = $select.val(); // ex. "Contact.Email"
+    if (!fieldPath) return; // rien choisi
+
+    const displayName = $select.find("option:selected").text().trim();
+    const shortName = fieldPath.split(".").pop(); // ex. "Email"
+
+    // Mémoriser la correspondance court ↔︎ complet
+    fieldMappings[shortName] = fieldPath;
+
+    const shortField = `%%${shortName}%%`;
+
+    // Insertion au curseur
+    const $msg = $("#messageContent");
+    const node = $msg[0];
+    const cursorPos = node.selectionStart;
+    const newText =
+      $msg.val().substring(0, cursorPos) +
+      shortField +
+      $msg.val().substring(cursorPos);
+    $msg.val(newText);
+
+    // Mettre à jour le compteur et la position du curseur
+    $("#characterCount").text(
+      `≈ ${getNormalizedLength(newText)} / 160 caractères`
+    );
+    node.setSelectionRange(
+      cursorPos + shortField.length,
+      cursorPos + shortField.length
+    );
+    $msg.focus();
+
+    // (optionnel) revenir sur la première option neutre
+    $select.prop("selectedIndex", 0);
+  });
 
   function onRequestedSchema(data) {
     if (!data || !data.schema) {
@@ -164,11 +261,13 @@ define(["postmonger"], function (Postmonger) {
       `<option value="Contact.Key">🔑 Contact Key</option>`
     );
 
-    // mapping pour conversions
     buildFieldMappingsFromSchema();
 
-    // Choisir un phone par défaut si possible
+    // avertir initialize() si une conversion attend le mapping
+    $(document).trigger("schema:mapped");
+
     setFirstPhoneIfEmpty();
+    validateAndToggleNext();
   }
 
   function getFieldIcon(fieldKey) {
@@ -185,48 +284,61 @@ define(["postmonger"], function (Postmonger) {
     return "🔤";
   }
 
+  // ---------- Cycle de vie ----------
   async function initialize(data) {
-    if (data) {
-      payload = data;
+    console.log("initialize payload", data);
+    payload = data || {};
 
-      const hasInArgs =
-        payload?.arguments?.execute?.inArguments &&
-        payload.arguments.execute.inArguments.length > 0;
+    // Demander schema/tokens
+    connection.trigger("requestSchema");
+    connection.trigger("requestTokens");
 
-      const inArguments = hasInArgs
-        ? payload.arguments.execute.inArguments
-        : [];
+    // Restauration
+    const inArgs = payload?.arguments?.execute?.inArguments || [];
+    let restoredPhone = "";
+    let restoredMsgFull = "";
+    let restoredTemplateId = "";
 
-      // Récupérer et afficher valeurs sauvegardées
-      inArguments.forEach((inArg) => {
-        Object.entries(inArg).forEach(([key, val]) => {
-          if (key === "phoneField") {
-            $("#phoneField").val(val);
-          } else if (key === "messageContent") {
-            const node = document.getElementById("messageContent");
-            if (node) {
-              // Convertit {{Full.Path}} -> %%Short%%
-              const shortMsg = replaceFullWithShort(val);
-              node.value = shortMsg;
-              // 👉 Synchroniser React (très important)
-              setReactValue(node, shortMsg);
-            }
-          }
-        });
-      });
+    inArgs.forEach((obj) => {
+      if (obj.phoneField) restoredPhone = obj.phoneField;
+      if (obj.messageContent) restoredMsgFull = obj.messageContent; // {{Full.Path}}
+      if (obj.templateId) restoredTemplateId = obj.templateId;
+    });
+
+    if (restoredPhone) $("#phoneField").val(restoredPhone);
+
+    if (restoredTemplateId) {
+      const node = document.getElementById("smsTemplate");
+      if (node) setReactValue(node, restoredTemplateId);
     }
 
-    // Sécurité : si pas de phone, mettre la 1ère option
-    setFirstPhoneIfEmpty();
+    if (restoredMsgFull) {
+      if (Object.keys(fieldMappings).length > 0) {
+        const shortMsg = replaceFullWithShort(restoredMsgFull);
+        const node = document.getElementById("messageContent");
+        if (node) setReactValue(node, shortMsg);
+      } else {
+        // attend que le schema soit mappé
+        $(document).one("schema:mapped", function () {
+          const shortMsg = replaceFullWithShort(restoredMsgFull);
+          const node = document.getElementById("messageContent");
+          if (node) setReactValue(node, shortMsg);
+          validateAndToggleNext();
+        });
+      }
+    }
 
-    // Indiquer que l'UI est prête (bouton Done sera géré par SFMC + validations côté React si besoin)
+    setFirstPhoneIfEmpty();
+    validateAndToggleNext();
     connection.trigger("ready");
   }
 
+  // ---------- Validation & Save ----------
   function validateForm() {
     let ok = true;
 
-    if (!$("#phoneField").val()) {
+    const phoneVal = $("#phoneField").val();
+    if (!phoneVal) {
       $("#phoneFieldError").text(
         "Veuillez sélectionner le champ numéro de téléphone."
       );
@@ -235,43 +347,77 @@ define(["postmonger"], function (Postmonger) {
       $("#phoneFieldError").text("");
     }
 
-    const msg = $("#messageContent").val();
-    if (!msg) {
+    const node = document.getElementById("messageContent");
+    const msg = node ? node.value || "" : "";
+    if (!msg.trim()) {
       $("#messageContentError").text("Le contenu du message est requis.");
       ok = false;
     } else {
-      $("#messageContentError").text("");
+      const check = validateMessageTokens(msg, schemaFields, {
+        caseInsensitive: true,
+        extras: ["ContactKey"], // ajoute ici d'autres champs “virtuels” si besoin
+      });
+
+      if (!check.isValid) {
+        $("#messageContentError").html(
+          "Certains champs personnalisés requis par le message ne figurent pas dans la DE : <br>" +
+            check.missing.map((x) => `%%${x}%%`).join(", ")
+        );
+        ok = false;
+      } else {
+        $("#messageContentError").text("");
+      }
     }
 
     return ok;
   }
 
+  function validateAndToggleNext() {
+    const ok = validateForm();
+    connection.trigger("updateButton", {
+      button: "next",
+      text: "Done",
+      visible: ok,
+      // background: ok ? "#af00bd" : "#CCCCCC",
+      enabled: ok,
+    });
+  }
+
   async function save() {
     if (!validateForm()) {
-      // Bloque l'avance si invalide
       connection.trigger("ready");
       return;
     }
 
-    const phoneField = $("#phoneField").val();
-    let messageContent = $("#messageContent").val();
+    const phoneField = $("#phoneField").val() || "";
+    const node = document.getElementById("messageContent");
+    const shortMsg = node ? node.value || "" : "";
+    const templateNode = document.getElementById("smsTemplate");
+    const templateId = templateNode ? templateNode.value || "" : "";
 
-    // Convertir %%Short%% -> {{Full.Path}} avant sauvegarde
     buildFieldMappingsFromSchema();
-    messageContent = replaceShortWithFull(messageContent);
+    let messageContent = replaceShortWithFull(shortMsg);
 
-    setReactValue(node, messageContent);
+    const mid =
+      typeof buid === "number" || typeof buid === "string" ? String(buid) : "";
+    const messageType = $("#messageType")?.val?.() || "SMS";
+    const smsName = $("#smsName").val() || "";
+    const campaignName = $("#campaignName").val() || "";
+
+    const inArgs = {
+      contactKey: "{{Contact.Key}}",
+      phoneField,
+      messageContent,
+      messageType,
+      buid: mid,
+      campaignName: campaignName || "",
+      smsName: smsName || "",
+      // smsCount: "1", --- IGNORE ---
+    };
 
     payload.arguments = payload.arguments || {};
     payload.arguments.execute = payload.arguments.execute || {};
-    payload.arguments.execute.inArguments = [
-      {
-        phoneField,
-        messageContent,
-        contactKey: "{{Contact.Key}}",
-        buid: buid,
-      },
-    ];
+    payload.arguments.execute.inArguments = [inArgs];
 
     payload.metaData = payload.metaData || {};
     payload.metaData.isConfigured = true;
