@@ -183,7 +183,7 @@ define(["postmonger"], function (Postmonger) {
     }
   }
 
-  // Insérer un champ de personnalisation choisi dans le <select>
+  // // Insérer un champ de personnalisation choisi dans le <select>
   $("#availableFields").on("change", function () {
     const $select = $(this);
     const fieldPath = $select.val(); // ex. "Contact.Email"
