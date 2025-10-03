@@ -29,6 +29,7 @@
   background-image: url('./img/bg-6.png');
   background-color: white;
   /* border: 8px solid var(--orange-primary); */
+  /* background-size: 100% 100%; */
   border: none;
   /* border-radius: 50px; */
 }
@@ -41,6 +42,16 @@
   width: 100%;
 }
 
+.section .sectionContainer {
+  width: 100%;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .section-item {
   display: block;
   margin: 10px 0;
@@ -49,18 +60,30 @@
   position: relative;
 }
 
-.section-item select {
+.section-item .input-item {
   border: 2px solid grey;
   border-radius: 10px;
-  padding: 10px;
-  width: 50%;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  width: 98%;
+  height: 35px;
+  overflow: hidden;
 }
 
-.section-item input {
-  border: 2px solid grey;
-  border-radius: 10px;
-  padding: 10px;
-  width: 47%;
+.m-left {
+  margin-left: 0.5%;
+}
+
+
+.section-item .input-item input,
+.section-item .input-item select {
+  margin: 0;
+  border: none;
+  padding: 3px;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
 .available-fields option:nth-child(even) {
@@ -88,6 +111,10 @@
   border-color: var(--orange-primary);
 }
 
+.left {
+  text-align: left;
+}
+
 .right {
   text-align: right;
 }
@@ -97,21 +124,37 @@
   align-self: right;
 }
 
+/* Avant : .align-right { float: right; } */
 .align-right {
-  text-align: right;
-  /* background-color: red; */
-  float: right;
+  float: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.section-item {
+  position: relative;
+  z-index: 0;
+}
+
+.section-item .available-fields {
+  position: relative;
+  z-index: 2;
+  /* le select “au-dessus” */
 }
 
 .champsPerso {
   width: 50%;
+  margin-left: 0;
   text-align: left;
-  margin: 0;
-  /* background-color: blue; */
-  margin-left: 50%;
+  /* <-- évite le décalage 50% qui provoque des overlaps */
 }
+
 .champsPerso .available-fields {
   width: 100%;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
 }
 
 /* .label-personalisation{
@@ -119,15 +162,6 @@
   margin-left: 50%;
 } */
 
-.align-left {
-  text-align: left;
-}
-
-
-
-.left {
-  text-align: left;
-}
 
 .message-area {
   position: relative;

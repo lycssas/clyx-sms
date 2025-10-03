@@ -144,84 +144,87 @@ export default function App() {
 
         <div className="section">
           {/* champ du destinataire (rempli par AMD via Schema) */}
-          <div className="section-item">
-            <div htmlFor="phoneField" className="label-phone">
-              <img
-                src={phoneIcone}
-                width={30}
-                alt="Icône téléphone"
-                className="icon"
-              />
+          <div className="sectionContainer">
+            <div className="section-item">
+              <div htmlFor="phoneField" className="label-phone">
+                <img
+                  src={phoneIcone}
+                  width={30}
+                  alt="Icône téléphone"
+                  className="icon"
+                />
+              </div>
+              <div className="input-item">
+                <select id="phoneField" className="available-fields">
+                  <option value="">Select phone number attribute *</option>
+                  {/* Les options sont injectées par customActivity.js */}
+                </select>
+              </div>
+              <div id="phoneFieldError" className="error"></div>
             </div>
-            <select id="phoneField" className="available-fields">
-              <option value="">Select phone number attribute *</option>
-              {/* Les options sont injectées par customActivity.js */}
-            </select>
-            <div id="phoneFieldError" className="error"></div>
-          </div>
-          {/* Nom du sms_$ */}
-          <div className="section-item">
-            <div htmlFor="phoneField" className="label-phone">
-              <img
-                src={sms}
-                width={30}
-                alt="Icône téléphone"
-                className="icon"
-              />
+            {/* Nom du sms_$ */}
+            <div className="section-item m-left">
+              <div htmlFor="phoneField" className="label-phone">
+                <img
+                  src={sms}
+                  width={30}
+                  alt="Icône téléphone"
+                  className="icon"
+                />
+              </div>
+              <div className="input-item">
+                <input id="smsName" placeholder="Sms name" />
+              </div>
+              <div id="smsNameError" className="error"></div>
             </div>
-            <input
-              id="smsName"
-              className="available-fields"
-              placeholder="Nom du sms"
-            />
-            <div id="smsNameError" className="error"></div>
           </div>
+          <div className="sectionContainer">
+            {/* Nom du sms_$ */}
+            <div className="section-item">
+              <div htmlFor="phoneField" className="label-phone">
+                <img
+                  src={campagne}
+                  width={30}
+                  alt="Icône téléphone"
+                  className="icon"
+                />
+              </div>
+              <div className="input-item">
+                <input id="campaignName" placeholder="Campaign name" />
+              </div>
+              <div id="smsNameError" className="error"></div>
+            </div>
 
-          {/* Nom du sms_$ */}
-          <div className="section-item">
-            <div htmlFor="phoneField" className="label-phone">
-              <img
-                src={campagne}
-                width={30}
-                alt="Icône téléphone"
-                className="icon"
-              />
+            {/* champ du template (géré par React uniquement) */}
+            <div className="section-item m-left">
+              <div htmlFor="templateField" className="label-phone">
+                <img
+                  src={textIcone}
+                  width={35}
+                  alt="Icône texte"
+                  className="icon"
+                />
+              </div>
+              <div className="input-item">
+                <select
+                  id="smsTemplate"
+                  className="available-fields"
+                  value={selectedTemplate}
+                  onChange={onTemplateChange}
+                >
+                  <option value="">Select a template *</option>
+                  {TEMPLATES.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div id="smsTemplateError" className="error"></div>
             </div>
-            <input
-              id="campaignName"
-              className="available-fields"
-              placeholder="Nom de la campagne"
-            />
-            <div id="smsNameError" className="error"></div>
-          </div>
-
-          {/* champ du template (géré par React uniquement) */}
-          <div className="section-item">
-            <div htmlFor="templateField" className="label-phone">
-              <img
-                src={textIcone}
-                width={35}
-                alt="Icône texte"
-                className="icon"
-              />
-            </div>
-            <select
-              id="smsTemplate"
-              className="available-fields"
-              value={selectedTemplate}
-              onChange={onTemplateChange}
-            >
-              <option value="">Select a template *</option>
-              {TEMPLATES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-            <div id="smsTemplateError" className="error"></div>
           </div>
           {/* champs perso (remplis par AMD) */}
-          <div className="section-item right align-right">
+          <div className="section-item right align-right .m-left">
             <label className="label-message">MESSAGE</label>
             <div className="champsPerso">
               <div htmlFor="templateField" className="label-personalisation">
@@ -232,10 +235,12 @@ export default function App() {
                   className="icon"
                 />
               </div>
-              <select id="availableFields" className="available-fields">
-                <option value="">Personalisation</option>
-                {/* Options injectées par customActivity.js */}
-              </select>
+              <div className="input-item">
+                <select id="availableFields" className="available-fields">
+                  <option value="">Personalisation</option>
+                  {/* Options injectées par customActivity.js */}
+                </select>
+              </div>
             </div>
           </div>
           {/* corps du message (contrôlé par React) */}
