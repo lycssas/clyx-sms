@@ -1,5 +1,4 @@
 import { query } from "./dbs.js";
-
 /** équivalent de addRecord (pendant /execute) */
 export async function insertPending({
   contactKey,
@@ -8,12 +7,33 @@ export async function insertPending({
   pushId,
   buid,
   country,
+  versionId,
+  activityId,
+  journeyId,
+  campaignName,
+  smsName,
+  smsId,
+  smsCount,
 }) {
   const rows = await query(
-    `INSERT INTO sms_logs (contact_key, phone, message, push_id, buid, country_code)
-     VALUES ($1,$2,$3,$4,$5,$6)
+    `INSERT INTO sms_logs (contact_key, phone, message, push_id, buid, country_code, version_id, activity_id, journey_id, campaign_name, sms_name, sms_id, sms_count)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
      RETURNING id`,
-    [contactKey, phone, message, pushId || null, buid || null, country || null]
+    [
+      contactKey,
+      phone,
+      message,
+      pushId || null,
+      buid || null,
+      country || null,
+      versionId || null,
+      activityId || null,
+      journeyId || null,
+      campaignName || null,
+      smsName || null,
+      smsId || null,
+      smsCount || null,
+    ]
   );
   return rows[0];
 }
