@@ -16,6 +16,7 @@ import {
 import { query } from "./server/dbs.js";
 import { logger } from "./server/logger.js";
 import { sendAdminAlertIncident } from "./server/monitoring/monitoring.js";
+import { fileURLToPath } from "url";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -38,6 +39,9 @@ app.use(express.json());
 
 /* ==== Fichiers statiques du front ==== */
 const buildDir = path.join(process.cwd(), "build"); // CRA
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /* --------- Helpers --------- */
 function formatE164(number) {
@@ -201,6 +205,7 @@ app.get("/ping", (_req, res) => {
 });
 
 app.use(express.static(buildDir));
+app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (_, res) => res.sendFile(path.join(buildDir, "index.html")));
 
 // Logs pour toutes les requêtes
