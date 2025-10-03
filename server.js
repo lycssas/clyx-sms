@@ -11,17 +11,19 @@ import {
 import {
   insertPending,
   updateDlrStatus,
-  findLastPendingByPhone,
   findLastPendingById,
 } from "./server/dbsquery.js";
 import { query } from "./server/dbs.js";
 import { logger } from "./server/logger.js";
+import { sendAdminAlertIncident } from "./server/monitoring/monitoring.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 const lamAccountId = process.env.LAM_ACCOUNTID;
 const lamPassWord = process.env.LAM_PASSWORD;
+const MONITORING_ADD_1 = process.env.MONITORING_ADD_1;
+const MONITORING_ADD_2 = process.env.MONITORING_ADD_2;
 
 const axiosInstance = axios.create({
   timeout: 30000, // 30 secondes
@@ -70,7 +72,6 @@ app.post("/execute", async (req, res) => {
       return res.status(200).json({ outArguments: [{ statusCode: "422" }] });
     }
 
-    
     // 1. Log DB
     const { id } = await insertPending({
       contactKey: contactKey,
@@ -86,7 +87,6 @@ app.post("/execute", async (req, res) => {
       smsId: `SMS_${versionId}`,
       smsCount: Math.max(1, Math.ceil(messageContent.length / 160)),
     });
-
 
     const bodyMessage = await rewriteBody(messageContent, id);
 
@@ -109,20 +109,35 @@ app.post("/execute", async (req, res) => {
       ],
     };
 
-
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
       payload,
       { timeout: 1200000 }
     );
 
-
     return res.status(200).json({ outArguments: [{ statusCode: "200" }] });
   } catch (err) {
-    logger.error("Error SMS /execute", {
-      stack: err.stack || err.message,
-    });
-    console.error("Error while sending SMS:", err?.response?.data || err);
+    const data = {
+      app: "clyx-sms",
+      env: "local",
+      status: "error",
+      error_type: "DATABASE_ERROR",
+      error_message: err.message,
+      error_code: err.code || null,
+      httpstatus: 500,
+      buid: null,
+      occured_at: new Date().toISOString(),
+      stack_trace: err.stack || null,
+      EmailAddress: null,
+      action: "UPSERT_Rows",
+    };
+    // console.log("Data:", data);
+    const result = await sendAdminAlertIncident(data, MONITORING_ADD_1);
+    const result2 = await sendAdminAlertIncident(data, MONITORING_ADD_2);
+    // logger.error("Error SMS /execute", {
+    //   stack: err.stack || err.message,
+    // });
+    // console.error("Error while sending SMS:", err?.response?.data || err);
     const status = err.response?.status || 500;
     return res
       .status(200)
@@ -135,7 +150,7 @@ app.post("/execute", async (req, res) => {
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
   const { push_id, to, ret_id, status } = req.query;
-  
+
   try {
     const numberPart = ret_id.split("_")[1];
     // const rec = await findLastPendingByPhone(to);
