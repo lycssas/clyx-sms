@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <title>Orange SMS Activity</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="js/jquery.min.js"></script>
-    <script src="js/require.js"></script>
+    <script src="./js/jquery.min.js"></script>
+    <script src="./js/require.js"></script>
     <!-- <link rel="stylesheet" href="css/custom-activity.css" /> -->
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
       rel="stylesheet"
     />
-    <script>
+    <!-- <script>
       requirejs.config({
         baseUrl: ".",
         paths: {
@@ -20,6 +20,28 @@
       });
       // Charger le script principal
       requirejs(["customActivity"]);
+    </script> -->
+
+    <script>
+      requirejs.config({
+        baseUrl: ".",
+        paths: { postmonger: "js/postmonger" },
+        shim: { postmonger: { exports: "Postmonger" } },
+      });
+
+      // Récupère le JSON puis lance l’app
+      fetch("/config.json")
+        .then((r) => r.json())
+        .then((cfg) => {
+          // Soit tu passes cfg à ton module principal :
+          requirejs(["customActivity"], function (app) {
+            app.init && app.init(cfg);
+          });
+          // ...ou tu le mets en global si ton code le lit ainsi :
+          // window.APP_CONFIG = cfg;
+          // requirejs(["customActivity"]);
+        })
+        .catch(console.error);
     </script>
   </head>
   <body>
