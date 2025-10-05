@@ -10,7 +10,7 @@
   "type": "REST",
   "lang": {
     "en-US": {
-      "name": "Clyx SMS test",
+      "name": "Clyx SMS",
       "description": "Activité REST personnalisée pour envoyer des SMS via SFMC"
     }
   },
@@ -28,7 +28,7 @@
         { "templateId": "" }
       ],
       "outArguments": [],
-      "url": "https://clyxsms.fly.dev/execute",
+      "url": "https://clyxsms.agencelycs.com/execute",
       "verb": "POST",
       "format": "json",
       "useJwt": false,
@@ -37,22 +37,22 @@
   },
   "configurationArguments": {
     "save": {
-      "url": "https://clyxsms.fly.dev/save",
+      "url": "https://clyxsms.agencelycs.com/save",
       "verb": "POST",
       "useJwt": false
     },
     "publish": {
-      "url": "https://clyxsms.fly.dev/publish",
+      "url": "https://clyxsms.agencelycs.com/publish",
       "verb": "POST",
       "useJwt": false
     },
     "validate": {
-      "url": "https://clyxsms.fly.dev/validate",
+      "url": "https://clyxsms.agencelycs.com/validate",
       "verb": "POST",
       "useJwt": false
     },
     "stop": {
-      "url": "https://clyxsms.fly.dev/stop",
+      "url": "https://clyxsms.agencelycs.com/stop",
       "verb": "POST",
       "useJwt": false
     }
