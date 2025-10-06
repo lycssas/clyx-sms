@@ -60,7 +60,7 @@ app.post("/execute", async (req, res) => {
       messageContent,
       contactKey,
       buid,
-      campaignName,
+      campaignCode,
       smsName,
     } = args;
     const versionId = req.body?.definitionInstanceId || "";
@@ -86,7 +86,7 @@ app.post("/execute", async (req, res) => {
       versionId: versionId,
       activityId: activityId,
       journeyId: journeyId,
-      campaignName: campaignName,
+      campaignCode: campaignCode,
       smsName: smsName,
       smsId: `SMS_${versionId}`,
       smsCount: Math.max(1, Math.ceil(messageContent.length / 160)),

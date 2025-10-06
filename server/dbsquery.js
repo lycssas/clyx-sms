@@ -10,14 +10,14 @@ export async function insertPending({
   versionId,
   activityId,
   journeyId,
-  campaignName,
+  campaignCode,
   smsName,
   smsId,
   smsCount,
   eventDate
 }) {
   const rows = await query(
-    `INSERT INTO sms_logs (contact_key, phone, message, push_id, buid, country_code, version_id, activity_id, journey_id, campaign_name, sms_name, sms_id, sms_count, sfmc_event_date)
+    `INSERT INTO sms_logs (contact_key, phone, message, push_id, buid, country_code, version_id, activity_id, journey_id, campaign_code, sms_name, sms_id, sms_count, sfmc_event_date)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
      RETURNING id`,
     [
@@ -30,7 +30,7 @@ export async function insertPending({
       versionId || null,
       activityId || null,
       journeyId || null,
-      campaignName || null,
+      campaignCode || null,
       smsName || null,
       smsId || null,
       smsCount || null,

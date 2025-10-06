@@ -173,7 +173,7 @@ export default function App() {
                 />
               </div>
               <div className="input-item">
-                <input id="smsName" placeholder="Sms name" />
+                <input id="smsName" placeholder="SMS Name" />
               </div>
               <div id="smsNameError" className="error"></div>
             </div>
@@ -190,7 +190,7 @@ export default function App() {
                 />
               </div>
               <div className="input-item">
-                <input id="campaignName" placeholder="Campaign name" />
+                <input id="campaignCode" placeholder="Campaign Code" />
               </div>
               <div id="smsNameError" className="error"></div>
             </div>
@@ -224,9 +224,9 @@ export default function App() {
             </div>
           </div>
           {/* champs perso (remplis par AMD) */}
-          <div className="section-item right align-right .m-left">
+          <div className="sectionContainer right align-right">
             <label className="label-message">MESSAGE</label>
-            <div className="champsPerso">
+            <div className="section-item champsPerso right">
               <div htmlFor="templateField" className="label-personalisation">
                 <img
                   src={personIcone}
@@ -244,7 +244,7 @@ export default function App() {
             </div>
           </div>
           {/* corps du message (contrôlé par React) */}
-          <div className="section-item message-area">
+          <div className="section-container message-area">
             <textarea
               id="messageContent"
               value={message}

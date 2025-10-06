@@ -22,14 +22,14 @@
         { "messageContent": "" },
         { "messageType": "" },
         { "buid": "" },
-        { "campaignName": "" },
+        { "campaignCode": "" },
         { "smsName": "" },
         { "smsId": "" },
         { "templateId": "" },
         { "eventDate": "" }
       ],
       "outArguments": [],
-      "url": "http://clyxsms.agencelycs.com/execute",
+      "url": "https://clyxsms.agencelycs.com/execute",
       "verb": "POST",
       "format": "json",
       "useJwt": false,
@@ -38,22 +38,22 @@
   },
   "configurationArguments": {
     "save": {
-      "url": "http://clyxsms.agencelycs.com/save",
+      "url": "https://clyxsms.agencelycs.com/save",
       "verb": "POST",
       "useJwt": false
     },
     "publish": {
-      "url": "http://clyxsms.agencelycs.com/publish",
+      "url": "https://clyxsms.agencelycs.com/publish",
       "verb": "POST",
       "useJwt": false
     },
     "validate": {
-      "url": "http://clyxsms.agencelycs.com/validate",
+      "url": "https://clyxsms.agencelycs.com/validate",
       "verb": "POST",
       "useJwt": false
     },
     "stop": {
-      "url": "http://clyxsms.agencelycs.com/stop",
+      "url": "https://clyxsms.agencelycs.com/stop",
       "verb": "POST",
       "useJwt": false
     }
@@ -105,7 +105,7 @@
             }
           },
           {
-            "campaignName": {
+            "campaignCode": {
               "dataType": "Text",
               "isNullable": false,
               "direction": "in"
