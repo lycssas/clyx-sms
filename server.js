@@ -19,7 +19,7 @@ import { sendAdminAlertIncident } from "./server/monitoring/monitoring.js";
 import { fileURLToPath } from "url";
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 const lamAccountId = process.env.LAM_ACCOUNTID;
 const lamPassWord = process.env.LAM_PASSWORD;
@@ -90,6 +90,7 @@ app.post("/execute", async (req, res) => {
       smsName: smsName,
       smsId: `SMS_${versionId}`,
       smsCount: Math.max(1, Math.ceil(messageContent.length / 160)),
+      eventDate: new Date().toISOString(),
     });
 
     const bodyMessage = await rewriteBody(messageContent, id);
@@ -205,7 +206,7 @@ app.get("/ping", (_req, res) => {
 });
 
 app.use(express.static(buildDir));
-app.use(express.static(path.join(__dirname, "public")));
+// app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (_, res) => res.sendFile(path.join(buildDir, "index.html")));
 
 // Logs pour toutes les requêtes
@@ -224,7 +225,7 @@ app.use((err, req, res, next) => {
 });
 
 // Démarrer le serveur
-app.listen(PORT, "localhost", async () => {
+app.listen(PORT, "0.0.0.0", async () => {
   try {
     logger.info(`Serveur démarré sur le port ${PORT}`);
     console.log(`Serveur démarré sur le port ${PORT}`);
