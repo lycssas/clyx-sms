@@ -78,27 +78,3 @@ export async function updateDlrStatus({ id, rawStatus, pushId }) {
     [rawStatus, dlrOk, pushId, id]
   );
 }
-
-/** récupérer les lignes à pousser vers SFMC (non encore poussées) */
-export async function getRowsForSfmc(limit = 1000) {
-  return await query(
-    `SELECT id, contact_key, dlr_ok
-       FROM sms_logs
-      WHERE dlr_status_raw IS NOT NULL
-        AND pushed_sfmc = FALSE
-      LIMIT $1`,
-    [limit]
-  );
-}
-
-/** marquer comme poussées */
-export async function markAsPushed(ids) {
-  if (!ids.length) return;
-  await query(
-    `UPDATE sms_logs
-        SET pushed_sfmc = TRUE,
-            pushed_sfmc_at = now()
-      WHERE id = ANY($1::bigint[])`,
-    [ids]
-  );
-}

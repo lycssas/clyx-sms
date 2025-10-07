@@ -51,7 +51,7 @@ function formatE164(number) {
 /* --------- /execute : envoi SMS --------- */
 app.post("/execute", async (req, res) => {
   console.log("Execute endpoint called");
-  console.log("informations reçues dans le corps de la requête:");
+  // console.log("informations reçues dans le corps de la requête:");
   try {
     // console.log("Processing /execute with payload:", req.body);
     const args = req.body.inArguments?.[0] || {};
@@ -66,6 +66,8 @@ app.post("/execute", async (req, res) => {
     const versionId = req.body?.definitionInstanceId || "";
     const activityId = req.body?.activityId || "";
     const journeyId = req.body?.journeyId || "";
+
+    // console.log("infos", args);
 
     if (!phoneField || !messageContent || !contactKey || !buid) {
       return res.status(200).json({ outArguments: [{ statusCode: "400" }] });
@@ -93,7 +95,11 @@ app.post("/execute", async (req, res) => {
       eventDate: new Date().toISOString(),
     });
 
+    // console.log("id", id);
+
     const bodyMessage = await rewriteBody(messageContent, id);
+
+    // console.log("bodyMessage", bodyMessage);
 
     // const from = process.env.SENDER_ID || formatE164(devPhoneNumber);
     const to = formatPhoneNumber(phoneField);
@@ -102,7 +108,7 @@ app.post("/execute", async (req, res) => {
     const payload = {
       accountid: lamAccountId,
       password: lamPassWord,
-      sender: "LAM TEST", // à personnaliser
+      sender: "AGENCE LYCS", // à personnaliser
       ret_id: `sms_${id}`, // pour le DLR
       priority: "2",
       text: bodyMessage,
@@ -114,11 +120,15 @@ app.post("/execute", async (req, res) => {
       ],
     };
 
+    // console.log("payload", payload);
+
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
       payload,
       { timeout: 1200000 }
     );
+
+    console.log("Response : ", response.statusText);
 
     return res.status(200).json({ outArguments: [{ statusCode: "200" }] });
   } catch (err) {
@@ -177,18 +187,22 @@ app.get("/recept", async (req, res) => {
 
 // Routes de configuration Journey Builder
 app.post("/save", (req, res) => {
+  console.log("save endpoint called");
   res.status(200).json({ success: true });
 });
 
 app.post("/publish", (req, res) => {
+  console.log("publish endpoint called");
   res.status(200).json({ success: true });
 });
 
 app.post("/validate", (req, res) => {
+  console.log("validate endpoint called");
   res.status(200).json({ success: true });
 });
 
 app.post("/stop", (req, res) => {
+  console.log("stop endpoint called");
   res.status(200).json({ success: true });
 });
 
@@ -234,9 +248,9 @@ app.listen(PORT, "0.0.0.0", async () => {
     console.log("Database connection pool status:", rows);
     console.log(`Accédez à http://0.0.0.0:${PORT}/ pour votre custom activity`);
   } catch (error) {
-    logger.error("Error starting server", {
-      stack: error.stack || error.message,
-    });
+    // logger.error("Error starting server", {
+    //   stack: error.stack || error.message,
+    // });
     console.error(
       "Error starting server:",
       error.response?.data || error.message
