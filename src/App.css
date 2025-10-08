@@ -42,20 +42,35 @@
   width: 100%;
 }
 
+.section .section-container {
+  display: block;
+  margin: 10px 0;
+  width: 100%;
+  margin: 10px 0;
+  position: relative;
+}
+
+.bg-red{
+  background-color: blue;
+}
+
 .section .sectionContainer {
   width: 100%;
+  position: relative;
   display: flex;
   margin: 0;
   padding: 0;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  /* background-color: blue; */
+  /* border : 5px solid red; */
 }
 
 .section-item {
   display: block;
   margin: 10px 0;
-  width: 100%;
+  width: 45%;
   margin: 10px 0;
   position: relative;
 }
@@ -66,7 +81,7 @@
   padding: 0;
   margin: 0;
   position: relative;
-  width: 98%;
+  width: 100%;
   height: 35px;
   overflow: hidden;
 }
@@ -143,15 +158,29 @@
   /* le select “au-dessus” */
 }
 
+.label-message {
+  left: 0;
+  /* position: absolute; */
+  float: left;
+  left: 0;
+  bottom: 0;
+  font-weight: bold;
+  margin-bottom: -8%;
+}
+
 .champsPerso {
-  width: 50%;
-  margin-left: 0;
+  /* width: 50%; */
+  /* position: absolute; */
+  float: right;
   text-align: left;
+  /* background-color: red; */
+  right: 0;
+  bottom: 0;
   /* <-- évite le décalage 50% qui provoque des overlaps */
 }
 
 .champsPerso .available-fields {
-  width: 100%;
+  /* width: 100%; */
   position: relative;
   z-index: 1;
   pointer-events: auto;
@@ -167,7 +196,7 @@
   position: relative;
 }
 
-.section-item textarea {
+.section-container textarea {
   text-align: left;
   width: 97.5%;
   min-height: 20vh;
@@ -176,14 +205,6 @@
   padding: 10px;
   font-size: 16px;
   position: relative;
-}
-
-.label-message {
-  float: right;
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  font-weight: bold;
 }
 
 .error {

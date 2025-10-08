@@ -402,7 +402,7 @@ define(["postmonger"], function (Postmonger) {
       typeof buid === "number" || typeof buid === "string" ? String(buid) : "";
     const messageType = $("#messageType")?.val?.() || "SMS";
     const smsName = $("#smsName").val() || "";
-    const campaignName = $("#campaignName").val() || "";
+    const campaignCode = $("#campaignCode").val() || "";
 
     const inArgs = {
       contactKey: "{{Contact.Key}}",
@@ -410,7 +410,7 @@ define(["postmonger"], function (Postmonger) {
       messageContent,
       messageType,
       buid: mid,
-      campaignName: campaignName || "",
+      campaignCode: campaignCode || "",
       smsName: smsName || "",
       // smsCount: "1", --- IGNORE ---
     };

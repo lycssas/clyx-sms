@@ -10,14 +10,15 @@ export async function insertPending({
   versionId,
   activityId,
   journeyId,
-  campaignName,
+  campaignCode,
   smsName,
   smsId,
   smsCount,
+  eventDate
 }) {
   const rows = await query(
-    `INSERT INTO sms_logs (contact_key, phone, message, push_id, buid, country_code, version_id, activity_id, journey_id, campaign_name, sms_name, sms_id, sms_count)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+    `INSERT INTO sms_logs (contact_key, phone, message, push_id, buid, country_code, version_id, activity_id, journey_id, campaign_code, sms_name, sms_id, sms_count, sfmc_event_date)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
      RETURNING id`,
     [
       contactKey,
@@ -29,10 +30,11 @@ export async function insertPending({
       versionId || null,
       activityId || null,
       journeyId || null,
-      campaignName || null,
+      campaignCode || null,
       smsName || null,
       smsId || null,
       smsCount || null,
+      eventDate || null
     ]
   );
   return rows[0];
@@ -74,29 +76,5 @@ export async function updateDlrStatus({ id, rawStatus, pushId }) {
             dlr_at         = now()
       WHERE id = $4`,
     [rawStatus, dlrOk, pushId, id]
-  );
-}
-
-/** récupérer les lignes à pousser vers SFMC (non encore poussées) */
-export async function getRowsForSfmc(limit = 1000) {
-  return await query(
-    `SELECT id, contact_key, dlr_ok
-       FROM sms_logs
-      WHERE dlr_status_raw IS NOT NULL
-        AND pushed_sfmc = FALSE
-      LIMIT $1`,
-    [limit]
-  );
-}
-
-/** marquer comme poussées */
-export async function markAsPushed(ids) {
-  if (!ids.length) return;
-  await query(
-    `UPDATE sms_logs
-        SET pushed_sfmc = TRUE,
-            pushed_sfmc_at = now()
-      WHERE id = ANY($1::bigint[])`,
-    [ids]
   );
 }

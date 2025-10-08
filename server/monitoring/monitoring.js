@@ -59,8 +59,9 @@ export async function sendAdminAlertIncident(data, admin_email) {
     };
 
     // const body = JSON.stringify(payload);
+    console.log("Admin alert....");
 
-    console.log("Admin alert payload:", payload);
+    // console.log("Admin alert payload:", payload);
 
     const url = `https://${MC_SUBDOMAIN}.rest.marketingcloudapis.com/messaging/v1/email/messages/${messageKey}`;
 
@@ -70,7 +71,7 @@ export async function sendAdminAlertIncident(data, admin_email) {
         Authorization: `Bearer ${mcToken}`,
       },
     });
-    console.log("Email alert sent successfully:", response);
+    // console.log("Email alert sent successfully:", response);
     // logger.info("Email alert sent successfully:", response.data);
   } catch (error) {
     // logger.error("Error sending email alert:", error);
