@@ -14,7 +14,6 @@ import {
   findLastPendingById,
 } from "./server/dbsquery.js";
 import { query } from "./server/dbs.js";
-import { logger } from "./server/logger.js";
 import { sendAdminAlertIncident } from "./server/monitoring/monitoring.js";
 import { fileURLToPath } from "url";
 
@@ -108,10 +107,11 @@ app.post("/execute", async (req, res) => {
     const payload = {
       accountid: lamAccountId,
       password: lamPassWord,
-      sender: "AGENCE LYCS", // à personnaliser
+      sender: "AIR CI", // à personnaliser
       ret_id: `sms_${id}`, // pour le DLR
       priority: "2",
       text: bodyMessage,
+      datacoding: 2,
       ret_url: `${process.env.BASE_URL}/recept`, // callback DLR
       to: [
         {
@@ -120,7 +120,7 @@ app.post("/execute", async (req, res) => {
       ],
     };
 
-    // console.log("payload", payload);
+    console.log("payload", payload);
 
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
@@ -134,9 +134,9 @@ app.post("/execute", async (req, res) => {
   } catch (err) {
     const data = {
       app: "clyx-sms",
-      env: "local",
+      env: "PROD",
       status: "error",
-      error_type: "DATABASE_ERROR",
+      error_type: "ENDPOINT_EXECUTE_ERROR",
       error_message: err.message,
       error_code: err.code || null,
       httpstatus: 500,
@@ -144,15 +144,11 @@ app.post("/execute", async (req, res) => {
       occured_at: new Date().toISOString(),
       stack_trace: err.stack || null,
       EmailAddress: null,
-      action: "UPSERT_Rows",
+      action: "Send SMS",
     };
     // console.log("Data:", data);
-    const result = await sendAdminAlertIncident(data, MONITORING_ADD_1);
-    const result2 = await sendAdminAlertIncident(data, MONITORING_ADD_2);
-    // logger.error("Error SMS /execute", {
-    //   stack: err.stack || err.message,
-    // });
-    // console.error("Error while sending SMS:", err?.response?.data || err);
+    sendAdminAlertIncident(data, MONITORING_ADD_1);
+    sendAdminAlertIncident(data, MONITORING_ADD_2);
     const status = err.response?.status || 500;
     return res
       .status(200)
@@ -164,12 +160,15 @@ app.post("/execute", async (req, res) => {
 
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
+  console.log("Reception endpoint called");
+  console.log("Response", req.query);
   const { push_id, to, ret_id, status } = req.query;
 
   try {
     const numberPart = ret_id.split("_")[1];
     // const rec = await findLastPendingByPhone(to);
     const rec = await findLastPendingById(numberPart);
+    console.log("rec", rec);
     if (!rec) {
       return res.sendStatus(200);
     }
@@ -178,10 +177,24 @@ app.get("/recept", async (req, res) => {
 
     res.sendStatus(200); // Important : répondre 200 rapidement
   } catch (err) {
-    logger.error("Error processing DLR", {
-      stack: err.stack || err.message,
-    });
-    console.error("❌", err.response?.data || err);
+    const data = {
+      app: "clyx-sms",
+      env: "PROD",
+      status: "error",
+      error_type: "DELIVERY_RECEIPT_ERROR",
+      error_message: err.message,
+      error_code: err.code || null,
+      httpstatus: 500,
+      buid: null,
+      occured_at: new Date().toISOString(),
+      stack_trace: err.stack || null,
+      EmailAddress: null,
+      action: "Delivery recept",
+    };
+    // console.log("Data:", data);
+    await sendAdminAlertIncident(data, MONITORING_ADD_1);
+    await sendAdminAlertIncident(data, MONITORING_ADD_2);
+    res.sendStatus(200);
   }
 });
 
@@ -227,33 +240,32 @@ app.get("*", (_, res) => res.sendFile(path.join(buildDir, "index.html")));
 app.use((err, req, res, next) => {
   if (req.body && Object.keys(req.body).length > 0) {
   }
-  logger.error("Erreur Express non gérée", { stack: err.stack });
-  // if (err) {
-  //   console.error("Error:", err);
-  //   logger.error(`Error: ${err.message}`, { stack: err.stack });
-  //   res.status(500).send("Internal Server Error");
-  // } else {
-  //   logger.info(`${req.method} ${req.url}`);
-  // }
   next();
 });
 
 // Démarrer le serveur
 app.listen(PORT, "0.0.0.0", async () => {
   try {
-    logger.info(`Serveur démarré sur le port ${PORT}`);
-    console.log(`Serveur démarré sur le port ${PORT}`);
     const rows = await query("SELECT NOW() AS now", []);
-    console.log("Database connection pool initialized.");
     console.log("Database connection pool status:", rows);
     console.log(`Accédez à http://0.0.0.0:${PORT}/ pour votre custom activity`);
   } catch (error) {
-    // logger.error("Error starting server", {
-    //   stack: error.stack || error.message,
-    // });
-    console.error(
-      "Error starting server:",
-      error.response?.data || error.message
-    );
+     const data = {
+       app: "clyx-sms",
+       env: "PROD",
+       status: "error",
+       error_type: "RUNNING_SERVER_ERROR",
+       error_message: err.message,
+       error_code: err.code || null,
+       httpstatus: 500,
+       buid: null,
+       occured_at: new Date().toISOString(),
+       stack_trace: err.stack || null,
+       EmailAddress: null,
+       action: "Run server",
+     };
+     // console.log("Data:", data);
+     await sendAdminAlertIncident(data, MONITORING_ADD_1);
+     await sendAdminAlertIncident(data, MONITORING_ADD_2);
   }
 });

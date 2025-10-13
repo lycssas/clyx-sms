@@ -1,12 +1,13 @@
-import { createReadStream, promises as fs } from "fs";
-// import readline from "readline";
-// import path from "path";
+import { sendAdminAlertIncident } from "./monitoring/monitoring.js";
 import dotenv from "dotenv";
 import { customAlphabet, nanoid } from "nanoid";
 import { query } from "./dbs.js";
-// import axios from "axios";
-import { logger } from "./logger.js";
 dotenv.config();
+
+const {
+  MONITORING_ADD_1,
+  MONITORING_ADD_2,
+} = process.env;
 
 // import { upsertUrl, linkUrlToSms } from "./shortnerfunctions.js";
 
@@ -28,6 +29,12 @@ const mapCountryToPrefix = [
   { code: "GA", prefix: "+241" },
   { code: "CG", prefix: "+242" },
   { code: "RC", prefix: "+243" },
+  { code: "ZA", prefix: "+27" }, // Afrique du Sud
+  { code: "LR", prefix: "+231" }, // Libéria
+  { code: "CH", prefix: "+41" }, // Suisse
+  { code: "UK", prefix: "+44" }, // Angleterre (Royaume-Uni)
+  { code: "LB", prefix: "+961" }, // Liban
+  { code: "US", prefix: "+1" }, // États-Unis
 ];
 
 // Cette fonction prend un numero de telephone et retourne le code pays correspondant en se bassant sur le map mapCountryToPrefix
@@ -79,11 +86,25 @@ ON CONFLICT (sms_id, url_id) DO UPDATE
 RETURNING slug;`,
       [smsId, urlId, slug]
     );
-    // console.log(result);
 
     return slug; // { id, slug }
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    const data = {
+      app: "clyx-sms",
+      env: "local",
+      status: "error",
+      error_type: "UPDATE_URL_ERROR",
+      error_message: err.message,
+      error_code: err.code || null,
+      httpstatus: 500,
+      buid: null,
+      occured_at: new Date().toISOString(),
+      stack_trace: err.stack || null,
+      EmailAddress: "amadoungom@agencelycs.com",
+      action: "UPSERT URL",
+    };
+    await sendAdminAlertIncident(data, MONITORING_ADD_1);
+    await sendAdminAlertIncident(data, MONITORING_ADD_2);
   }
 }
 
@@ -104,23 +125,24 @@ export async function rewriteBody(body, smsId) {
     const matches = [...body.matchAll(URL_RX)];
     for (const [full] of matches) {
       const slugVar = await upsertUrl(full, smsId);
-      // Link url to SMS log if smsLogId is provided
-      // if (smsId) {
-      //   await linkUrlToSms(smsId, urls.id);
-      // }
-      // Logger le resultat
-      // console.log("upserted URL:", slugVar);
       body = body.replace(full, `${SHORT_URL}/${slugVar}`);
     }
     return body;
   } catch (error) {
-    logger.error("Error rewriting body with URLs", {
-      stack: error.stack || error.message,
-    });
-    console.error(
-      "Error rewriting body with URLs:",
-      error.response?.data || error.message
-    );
-    throw error;
+    const data = {
+      app: "clyx-sms",
+      env: "local",
+      status: "error",
+      error_type: "REWRITTING_BODY_ERROR",
+      error_message: err.message,
+      error_code: err.code || null,
+      httpstatus: 500,
+      buid: null,
+      occured_at: new Date().toISOString(),
+      stack_trace: err.stack || null,
+      action: "REWRITE BODY",
+    };
+    await sendAdminAlertIncident(data, MONITORING_ADD_1);
+    await sendAdminAlertIncident(data, MONITORING_ADD_2);
   }
 }
