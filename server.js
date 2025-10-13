@@ -36,21 +36,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.raw({ type: "application/jwt", limit: "2mb" }));
 app.use(express.json());
 
-/* ==== Fichiers statiques du front ==== */
 const buildDir = path.join(process.cwd(), "build"); // CRA
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/* --------- Helpers --------- */
 function formatE164(number) {
   return number.replace(/^0+/, "").replace(/^00/, "+").replace(/^\+?/, "+");
 }
 
-/* --------- /execute : envoi SMS --------- */
 app.post("/execute", async (req, res) => {
   console.log("Execute endpoint called");
-  // console.log("informations reçues dans le corps de la requête:");
   try {
     // console.log("Processing /execute with payload:", req.body);
     const args = req.body.inArguments?.[0] || {};
@@ -65,8 +61,6 @@ app.post("/execute", async (req, res) => {
     const versionId = req.body?.definitionInstanceId || "";
     const activityId = req.body?.activityId || "";
     const journeyId = req.body?.journeyId || "";
-
-    // console.log("infos", args);
 
     if (!phoneField || !messageContent || !contactKey || !buid) {
       return res.status(200).json({ outArguments: [{ statusCode: "400" }] });
@@ -94,13 +88,7 @@ app.post("/execute", async (req, res) => {
       eventDate: new Date().toISOString(),
     });
 
-    // console.log("id", id);
-
     const bodyMessage = await rewriteBody(messageContent, id);
-
-    // console.log("bodyMessage", bodyMessage);
-
-    // const from = process.env.SENDER_ID || formatE164(devPhoneNumber);
     const to = formatPhoneNumber(phoneField);
 
     /* payload LAfricaMobile */
@@ -120,15 +108,11 @@ app.post("/execute", async (req, res) => {
       ],
     };
 
-    console.log("payload", payload);
-
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
       payload,
       { timeout: 1200000 }
     );
-
-    console.log("Response : ", response.statusText);
 
     return res.status(200).json({ outArguments: [{ statusCode: "200" }] });
   } catch (err) {
@@ -146,7 +130,6 @@ app.post("/execute", async (req, res) => {
       EmailAddress: null,
       action: "Send SMS",
     };
-    // console.log("Data:", data);
     sendAdminAlertIncident(data, MONITORING_ADD_1);
     sendAdminAlertIncident(data, MONITORING_ADD_2);
     const status = err.response?.status || 500;
@@ -160,15 +143,12 @@ app.post("/execute", async (req, res) => {
 
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
-  console.log("Reception endpoint called");
-  console.log("Response", req.query);
   const { push_id, to, ret_id, status } = req.query;
 
   try {
     const numberPart = ret_id.split("_")[1];
     // const rec = await findLastPendingByPhone(to);
     const rec = await findLastPendingById(numberPart);
-    console.log("rec", rec);
     if (!rec) {
       return res.sendStatus(200);
     }
@@ -191,7 +171,6 @@ app.get("/recept", async (req, res) => {
       EmailAddress: null,
       action: "Delivery recept",
     };
-    // console.log("Data:", data);
     await sendAdminAlertIncident(data, MONITORING_ADD_1);
     await sendAdminAlertIncident(data, MONITORING_ADD_2);
     res.sendStatus(200);
@@ -264,7 +243,6 @@ app.listen(PORT, "0.0.0.0", async () => {
        EmailAddress: null,
        action: "Run server",
      };
-     // console.log("Data:", data);
      await sendAdminAlertIncident(data, MONITORING_ADD_1);
      await sendAdminAlertIncident(data, MONITORING_ADD_2);
   }

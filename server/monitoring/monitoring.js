@@ -34,7 +34,6 @@ export async function sendAdminAlertIncident(data, admin_email) {
   try {
     const messageKey = await nanoid(16);
     const mcToken = await getMcToken();
-    console.log("MC Token:", mcToken);
     const payload = {
       definitionKey: MC_DEFINITION_KEY,
       recipient: {
@@ -61,8 +60,6 @@ export async function sendAdminAlertIncident(data, admin_email) {
     // const body = JSON.stringify(payload);
     console.log("Admin alert....");
 
-    // console.log("Admin alert payload:", payload);
-
     const url = `https://${MC_SUBDOMAIN}.rest.marketingcloudapis.com/messaging/v1/email/messages/${messageKey}`;
 
     const response = await axios.post(url, payload, {
@@ -71,11 +68,8 @@ export async function sendAdminAlertIncident(data, admin_email) {
         Authorization: `Bearer ${mcToken}`,
       },
     });
-    // console.log("Email alert sent successfully:", response);
-    // logger.info("Email alert sent successfully:", response.data);
   } catch (error) {
     // logger.error("Error sending email alert:", error);
     console.log("L'erreur vient d'ici");
-    console.error("Error sending email alert:", error);
   }
 }
