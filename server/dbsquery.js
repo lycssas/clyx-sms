@@ -14,7 +14,7 @@ export async function insertPending({
   smsName,
   smsId,
   smsCount,
-  eventDate
+  eventDate,
 }) {
   const rows = await query(
     `INSERT INTO sms_logs (contact_key, phone, message, push_id, buid, country_code, version_id, activity_id, journey_id, campaign_code, sms_name, sms_id, sms_count, sfmc_event_date)
@@ -34,7 +34,7 @@ export async function insertPending({
       smsName || null,
       smsId || null,
       smsCount || null,
-      eventDate || null
+      eventDate || null,
     ]
   );
   return rows[0];
@@ -68,7 +68,7 @@ export async function findLastPendingById(id) {
 /** marquer DLR & prêt pour SFMC */
 export async function updateDlrStatus({ id, rawStatus, pushId }) {
   const dlrOk = rawStatus === "6";
-  await query(
+  const rep = await query(
     `UPDATE sms_logs
         SET dlr_status_raw = $1,
             dlr_ok         = $2,
