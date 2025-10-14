@@ -228,7 +228,7 @@ app.listen(PORT, "0.0.0.0", async () => {
     const rows = await query("SELECT NOW() AS now", []);
     console.log("Database connection pool status:", rows);
     console.log(`Accédez à http://0.0.0.0:${PORT}/ pour votre custom activity`);
-  } catch (error) {
+  } catch (err) {
      const data = {
        app: "clyx-sms",
        env: "PROD",
