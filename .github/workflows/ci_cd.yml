@@ -95,9 +95,10 @@ jobs:
           script: |
             set -e
             echo "🔄 Restarting backend..."
+            export PATH=$PATH:/usr/bin:/usr/local/bin
             cd /root/clyx-sms
             npm ci --omit=dev
-            pm2 restart clyxsms || pm2 start server.js --name "clyxsms" --port 4000
+            pm2 restart clyxsms || pm2 start server.js --name "clyxsms"
             echo "✅ Backend restarted."
             echo "🔄 Restarting Nginx..."
             sudo systemctl restart nginx
