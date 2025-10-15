@@ -69,6 +69,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "build/*"
           target: "/var/www/clyx-sms"
+          overwrite: true   # ← ajoute cette ligne
 
       # 8️⃣ Restart backend + nginx
       - name: Restart backend (PM2) and Nginx
