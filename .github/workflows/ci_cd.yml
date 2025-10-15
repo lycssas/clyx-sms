@@ -95,7 +95,8 @@ jobs:
           script: |
             set -e
             echo "🔄 Restarting backend..."
-            export PATH=$PATH:/usr/bin:/usr/local/bin
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             cd /root/clyx-sms
             npm ci --omit=dev
             pm2 restart clyxsms || pm2 start server.js --name "clyxsms"
