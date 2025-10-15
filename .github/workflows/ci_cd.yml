@@ -100,6 +100,7 @@ jobs:
             cd /root/clyx-sms
             npm ci --omit=dev
             pm2 restart clyxsms || pm2 start server.js --name "clyxsms"
+            pm2 save
             echo "✅ Backend restarted."
             echo "🔄 Restarting Nginx..."
             sudo systemctl restart nginx
