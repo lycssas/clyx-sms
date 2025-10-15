@@ -69,9 +69,9 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo rm -rf /var/www/clyx-sms/*
-            sudo mkdir -p /var/www/clyx-sms
-            sudo chown -R $USER:$USER /var/www/clyx-sms
+            rm -rf /var/www/clyx-sms/*
+            mkdir -p /var/www/clyx-sms
+            chown -R $USER:$USER /var/www/clyx-sms
 
       - name: Upload frontend build
         uses: appleboy/scp-action@v0.1.7
