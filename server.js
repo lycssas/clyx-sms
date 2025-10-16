@@ -46,7 +46,8 @@ function formatE164(number) {
 }
 
 app.post("/execute", async (req, res) => {
-  console.log("Execute endpoint called");
+  // console.log("Execute endpoint called");
+  // console.log("Body : ", req.body);
   try {
     // console.log("Processing /execute with payload:", req.body);
     const args = req.body.inArguments?.[0] || {};
@@ -107,6 +108,8 @@ app.post("/execute", async (req, res) => {
         },
       ],
     };
+
+    // console.log("Payload ; ", payload);
 
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
@@ -229,21 +232,21 @@ app.listen(PORT, "0.0.0.0", async () => {
     console.log("Database connection pool status:", rows);
     console.log(`Accédez à http://0.0.0.0:${PORT}/ pour votre custom activity`);
   } catch (error) {
-     const data = {
-       app: "clyx-sms",
-       env: "PROD",
-       status: "error",
-       error_type: "RUNNING_SERVER_ERROR",
-       error_message: err.message,
-       error_code: err.code || null,
-       httpstatus: 500,
-       buid: null,
-       occured_at: new Date().toISOString(),
-       stack_trace: err.stack || null,
-       EmailAddress: null,
-       action: "Run server",
-     };
-     await sendAdminAlertIncident(data, MONITORING_ADD_1);
-     await sendAdminAlertIncident(data, MONITORING_ADD_2);
+    const data = {
+      app: "clyx-sms",
+      env: "PROD",
+      status: "error",
+      error_type: "RUNNING_SERVER_ERROR",
+      error_message: err.message,
+      error_code: err.code || null,
+      httpstatus: 500,
+      buid: null,
+      occured_at: new Date().toISOString(),
+      stack_trace: err.stack || null,
+      EmailAddress: null,
+      action: "Run server",
+    };
+    await sendAdminAlertIncident(data, MONITORING_ADD_1);
+    await sendAdminAlertIncident(data, MONITORING_ADD_2);
   }
 });
