@@ -46,7 +46,8 @@ function formatE164(number) {
 }
 
 app.post("/execute", async (req, res) => {
-  console.log("Execute endpoint called");
+  // console.log("Execute endpoint called");
+  // console.log("Body : ", req.body);
   try {
     // console.log("Processing /execute with payload:", req.body);
     const args = req.body.inArguments?.[0] || {};
@@ -107,6 +108,8 @@ app.post("/execute", async (req, res) => {
         },
       ],
     };
+
+    // console.log("Payload ; ", payload);
 
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
