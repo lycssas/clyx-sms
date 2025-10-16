@@ -36,7 +36,7 @@ export default function App() {
       },
       {
         id: "modification_escale",
-        label: "✈️ ASM - Changement horraire",
+        label: "✈️ ASM - Changement horaire",
         text: "M/Mme %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%TECH_OldDateDepart__c%% est modifié.\n• Nouvelle heure de départ : %%TECH_NvlHeureDepart__c%% avec une escale à %%CampaignMember:Campaign:Escale__c%% \n• Convocation : %%TECH_NvlHeureDepart__c%% (heure - 2h à gérer par la DE/logique)\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et vous remercions de votre compréhension.\nCordialement,\nService Réservation\nAir Côte d’Ivoire – Abidjan",
       },
     ],

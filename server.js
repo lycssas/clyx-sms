@@ -231,22 +231,22 @@ app.listen(PORT, "0.0.0.0", async () => {
     const rows = await query("SELECT NOW() AS now", []);
     console.log("Database connection pool status:", rows);
     console.log(`Accédez à http://0.0.0.0:${PORT}/ pour votre custom activity`);
-  } catch (error) {
-    const data = {
-      app: "clyx-sms",
-      env: "PROD",
-      status: "error",
-      error_type: "RUNNING_SERVER_ERROR",
-      error_message: err.message,
-      error_code: err.code || null,
-      httpstatus: 500,
-      buid: null,
-      occured_at: new Date().toISOString(),
-      stack_trace: err.stack || null,
-      EmailAddress: null,
-      action: "Run server",
-    };
-    await sendAdminAlertIncident(data, MONITORING_ADD_1);
-    await sendAdminAlertIncident(data, MONITORING_ADD_2);
+  } catch (err) {
+     const data = {
+       app: "clyx-sms",
+       env: "PROD",
+       status: "error",
+       error_type: "RUNNING_SERVER_ERROR",
+       error_message: err.message || null,
+       error_code: err.code || null,
+       httpstatus: 500,
+       buid: null,
+       occured_at: new Date().toISOString(),
+       stack_trace: err.stack || null,
+       EmailAddress: null,
+       action: "Run server",
+     };
+     await sendAdminAlertIncident(data, MONITORING_ADD_1);
+     await sendAdminAlertIncident(data, MONITORING_ADD_2);
   }
 });

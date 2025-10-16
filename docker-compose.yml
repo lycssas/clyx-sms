@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  web:
+    image: papaibrahima/clyxsmlatest:latest
+    container_name: react_express_app
+    restart: always
+    ports:
+      - "80:3000" # Mappe le port 80 du serveur (HTTP standard) au port 3000 de votre conteneur (exposé par votre Dockerfile)
+    environment:
+      # Ajoutez ici les variables d'environnement nécessaires à Express en production
+      - NODE_ENV=production
+      - PORT=3001
+      - ORANGE_CLIENT_ID=wBNKfzOnkFCSvdZt1QwEnHTHgyEs0wec
+      - ORANGE_CLIENT_SECRET=lupviMgkWOYmXRyV3BHEW9CfgzLGSMST78633i2QPcGE
+      - ORANGE_AUTH_HEADER=Basic d0JOS2Z6T25rRkNTdmRadDFRd0VuSFRIZ3lFczB3ZWM6bHVwdmlNZ2tXT1ltWFJ5VjNCSEVXOUNmZ3pMR1NNU1Q3ODYzM2kyUVBjR0U=
+
+      - LAM_ACCOUNTID=NAFIO_01
+      - LAM_PASSWORD=TdmXfolpBQujCAf
+      - BASE_URL=https://lycs-sms-ca.fly.dev
+
+      - MC_CLIENT_ID=p98r454rq7lwmorn3a4t9ofg
+      - MC_CLIENT_SECRET=PYeWrPARlSiBD0NkW3ycGQPc
+      - MC_ACCOUNT_ID=536007554
+      - MC_SUBDOMAIN=mcddzk3rjl8tbrd59n3dvj57-lz8
+# DE_KEY=SMS_Test_Contacts_2025
+      - DE_KEY=SMS_CampaignMember_SendQueue
+      - DE_NAME=SMS_Contacts_receipt
+      - MC_REST_URL=https://mcddzk3rjl8tbrd59n3dvj57-lz8.rest.marketingcloudapis.com/
+      - MC_AUTH_BASE_URL=https://mcddzk3rjl8tbrd59n3dvj57-lz8.auth.marketingcloudapis.com/
+      - DATABASE_URL=postgresql://ahmada:3lyIL1cWisPvpQdCPeyQOOTfOonzsK0W@direct.n83v7rg5wq405gxk.flympg.net/lycssmsca
