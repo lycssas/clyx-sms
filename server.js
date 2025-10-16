@@ -234,7 +234,7 @@ app.listen(PORT, "0.0.0.0", async () => {
        env: "PROD",
        status: "error",
        error_type: "RUNNING_SERVER_ERROR",
-       error_message: err.message,
+       error_message: err.message || null,
        error_code: err.code || null,
        httpstatus: 500,
        buid: null,
