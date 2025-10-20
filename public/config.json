@@ -3,7 +3,7 @@
   "metaData": {
     "icon": "images/logo-clyx.png",
     "iconSmall": "images/logo-clyx.png",
-    "category": "custom",
+    "category": "message",
     "version": "1.0",
     "isConfigured": true
   },

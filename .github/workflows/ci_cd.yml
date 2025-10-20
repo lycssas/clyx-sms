@@ -1,0 +1,154 @@
+name: CI/CD - Full Auto Deploy (React + Express, Nginx + PM2 + Slack)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup Node
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Create .env from Secrets
+        run: |
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "LAM_ACCOUNTID=${{ secrets.LAM_ACCOUNTID }}" >> .env
+          echo "LAM_PASSWORD=${{ secrets.LAM_PASSWORD }}" >> .env
+          echo "BASE_URL=${{ secrets.BASE_URL }}" >> .env
+          echo "SHORT_URL=${{ secrets.SHORT_URL }}" >> .env
+          echo "MONITORING_ADD_1=${{ secrets.MONITORING_ADD_1 }}" >> .env
+          echo "MONITORING_ADD_2=${{ secrets.MONITORING_ADD_2 }}" >> .env
+          echo "MC_CLIENT_ID=${{ secrets.MC_CLIENT_ID }}" >> .env
+          echo "MC_CLIENT_SECRET=${{ secrets.MC_CLIENT_SECRET }}" >> .env
+          echo "MC_ACCOUNT_ID=${{ secrets.MC_ACCOUNT_ID }}" >> .env
+          echo "MC_SUBDOMAIN=${{ secrets.MC_SUBDOMAIN }}" >> .env
+          echo "MC_DEFINITION_KEY=${{ secrets.MC_DEFINITION_KEY }}" >> .env
+          echo "DE_KEY=${{ secrets.DE_KEY }}" >> .env
+          echo "DE_NAME=${{ secrets.DE_NAME }}" >> .env
+          echo "MC_REST_URL=${{ secrets.MC_REST_URL }}" >> .env
+          echo "MC_AUTH_BASE_URL=${{ secrets.MC_AUTH_BASE_URL }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "✅ .env file created."
+
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+
+      # 4️⃣ Build frontend
+      - name: Build React frontend
+        run: npm run build
+
+      # 5️⃣ Prepare backend package
+      - name: Prepare backend deployment package
+        run: |
+          mkdir deploy
+          cp -r server deploy/
+          cp package*.json deploy/
+          echo "✅ Backend package ready."
+
+          
+
+      - name: Clean frontend folder
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            rm -rf /var/www/clyx-sms/*
+            mkdir -p /var/www/clyx-sms
+            chown -R $USER:$USER /var/www/clyx-sms
+
+      - name: Upload frontend build
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "build/*"
+          target: "/var/www/clyx-sms"
+          overwrite: true
+
+
+      # 8️⃣ Restart backend + nginx
+      - name: Restart backend (PM2) and Nginx
+        id: restart
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            echo "🔄 Restarting backend..."
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            cd /root/clyx-sms
+            npm ci --omit=dev
+            pm2 restart clyxsms || pm2 start server.js --name "clyxsms"
+            pm2 save
+            echo "✅ Backend restarted."
+            echo "🔄 Restarting Nginx..."
+            sudo systemctl restart nginx
+            echo "✅ Nginx restarted."
+
+      # # 9️⃣ Notify success on Slack
+      # - name: Notify Slack (success)
+      #   if: success()
+      #   uses: slackapi/slack-github-action@v1.27.0
+      #   with:
+      #     payload: |
+      #       {
+      #         "attachments": [
+      #           {
+      #             "color": "#2eb886",
+      #             "pretext": "🚀 *ClyxSMS Deployment Successful!*",
+      #             "fields": [
+      #               { "title": "Repository", "value": "${{ github.repository }}", "short": true },
+      #               { "title": "Branch", "value": "${{ github.ref_name }}", "short": true }
+      #             ],
+      #             "footer": "GitHub Actions • ${{ github.workflow }}",
+      #             "ts": "$(date +%s)"
+      #           }
+      #         ]
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      # # 🔟 Notify failure on Slack
+      # - name: Notify Slack (failure)
+      #   if: failure()
+      #   uses: slackapi/slack-github-action@v1.27.0
+      #   with:
+      #     payload: |
+      #       {
+      #         "attachments": [
+      #           {
+      #             "color": "#e01e5a",
+      #             "pretext": "❌ *ClyxSMS Deployment Failed!*",
+      #             "fields": [
+      #               { "title": "Repository", "value": "${{ github.repository }}", "short": true },
+      #               { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
+      #               { "title": "Error", "value": "Check GitHub Actions logs for details.", "short": false }
+      #             ],
+      #             "footer": "GitHub Actions • ${{ github.workflow }}",
+      #             "ts": "$(date +%s)"
+      #           }
+      #         ]
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

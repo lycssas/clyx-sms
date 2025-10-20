@@ -24,40 +24,19 @@ export default function App() {
   // -------- Templates (React garde la main là-dessus)
   const TEMPLATES = useMemo(
     () => [
-      // Template 1 : Confirmation de vol (Adapté avec clés formatées)
       {
-        id: "confirm",
-        label: "✈️ Confirmation de Vol",
-        // Utilisation des clés formatées TECH_Nvl
-        text: "Bonjour %%CampaignMember:Name%%, votre vol %%CampaignMember:Campaign:NumeroVolNew__c%% Air Côte d’Ivoire de la route %%CampaignMember:Campaign:RouteNew__c%% est confirmé. Départ le %%TECH_NvlDateDepart__c%% à %%TECH_NvlHeureDepart__c%%. Enregistrez-vous sur https://aircotedivoire.com.",
+        id: "",
+        label: "",
+        text: "",
       },
-
-      // Template 2 : Rappel avant départ (Adapté avec clés formatées)
-      {
-        id: "reminder",
-        label: "🕒 Rappel avant Départ",
-        // Utilisation des champs formatés pour l'heure et le numéro de vol
-        text: "Rappel : vol %%CampaignMember:Campaign:NumeroVolNew__c%% le %%TECH_NvlDateDepart__c%% à %%TECH_NvlHeureDepart__c%%. Merci d’arriver 2h avant le départ. Bon voyage !",
-      },
-
-      // Template 3 : Offre spéciale (Clé de date formatée utilisée pour l'échéance)
-      {
-        id: "promo",
-        label: "💡 Offre Spéciale",
-        // Utilisation d'une clé formatée comme date d'échéance
-        text: "Air Côte d’Ivoire : -20% si vous réservez avant %%TECH_NvlDateDepart__c%%. Détails sur https://aircotedivoire.com.",
-      },
-
-      // Nouveaux Templates de Perturbation (Clés formatées utilisées)
-
       {
         id: "delay_info",
-        label: "⚠️ Retard de Vol - Information",
+        label: "⚠️ ASM - Changement vol",
         text: "M/Mme %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%TECH_OldDateDepart__c%% (initialement prévu à %%TECH_OldHeureDepart__c%%), connaîtra un retard.\n• Nouvelle heure de départ : %%TECH_NvlHeureDepart__c%% \n• Convocation : %%TECH_NvlHeureDepart__c%% (heure - 2h à gérer par la DE/logique)\n• Arrivée estimée : %%TECH_NvlHeureArrive__c%%\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et restons à votre entière disposition.\nCordialement,\nService Réservation\nAir Côte d’Ivoire",
       },
       {
         id: "modification_escale",
-        label: "✈️ Modification de Vol - Escale",
+        label: "✈️ ASM - Changement horaire",
         text: "M/Mme %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%TECH_OldDateDepart__c%% est modifié.\n• Nouvelle heure de départ : %%TECH_NvlHeureDepart__c%% avec une escale à %%CampaignMember:Campaign:Escale__c%% \n• Convocation : %%TECH_NvlHeureDepart__c%% (heure - 2h à gérer par la DE/logique)\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et vous remercions de votre compréhension.\nCordialement,\nService Réservation\nAir Côte d’Ivoire – Abidjan",
       },
     ],

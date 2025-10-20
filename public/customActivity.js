@@ -16,36 +16,82 @@ define(["postmonger"], function (Postmonger) {
     if (t && t.MID) buid = t.MID;
   });
 
-  // ---------- Helper: synchroniser React (textarea contrôlé) ----------
+  // Met à jour proprement une textarea contrôlée (React-like)
   function setReactValue(el, value) {
-    // setter natif pour mettre à jour le value tracker de React
-    const setter = Object.getOwnPropertyDescriptor(
-      HTMLTextAreaElement.prototype,
-      "value"
-    ).set;
-    setter.call(el, value);
-    // event 'input' qui bubble (capté par React -> onChange)
-    el.dispatchEvent(new Event("input", { bubbles: true }));
+    try {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLTextAreaElement.prototype,
+        "value"
+      ).set;
+      setter.call(el, value);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    } catch (e) {
+      // fallback
+      el.value = value;
+    }
   }
 
+  function getNormalizedLength(text) {
+    if (!text) return 0;
+    return String(text).replace(/\r\n/g, "\n").length;
+  }
+
+  function isQuoted(s) {
+    return (
+      typeof s === "string" &&
+      s.length >= 2 &&
+      s[0] === '"' &&
+      s[s.length - 1] === '"'
+    );
+  }
+
+  function quoteIfColon(segment) {
+    if (!segment) return segment;
+    if (segment.includes(":") && !isQuoted(segment)) return `"${segment}"`;
+    return segment;
+  }
+
+  function unquote(s) {
+    return isQuoted(s) ? s.slice(1, -1) : s;
+  }
+
+  // Normalise un fullPath pour garantir le dernier segment entre guillemets si contient ":"
+  function normalizeFullPathWithQuotes(path) {
+    if (!path) return path;
+    const parts = String(path).split(".");
+    if (parts.length === 0) return path;
+    const last = parts[parts.length - 1];
+    parts[parts.length - 1] = quoteIfColon(last);
+    return parts.join(".");
+  }
+
+  // Récupère le short (dernier segment sans guillemets, conserve les ":")
+  function shortFromFullPath(path) {
+    if (!path) return "";
+    const parts = String(path).split(".");
+    const last = parts[parts.length - 1] || "";
+    return unquote(last);
+  }
+
+  // Extraction & Validation des tokens
   function extractPersonalizationKeys(message) {
     const found = new Set();
     if (!message) return [];
 
-    // %%Token%%  (alphanum + _)
+    // %%Token%% (A-Z a-z 0-9 _ :)
     const reShort = /%%\s*([A-Za-z0-9_:]+)\s*%%/g;
     let m;
     while ((m = reShort.exec(message)) !== null) {
       found.add(m[1]);
     }
 
-    // {{Full.Path.To.Field}} -> prend le dernier segment "Field"
-    const reFull = /\{\{[^}]*?\.([A-Za-z0-9_]+)\}\}/g;
+    // {{Full.Path.To."Field"}} -> prend le dernier segment (retire guillemets)
+    const reFull = /\{\{\s*([^}]+?)\s*\}\}/g;
     while ((m = reFull.exec(message)) !== null) {
-      found.add(m[1]);
+      const path = m[1];
+      const last = shortFromFullPath(normalizeFullPathWithQuotes(path));
+      if (last) found.add(last);
     }
-
-    console.log("extractPersonalizationKeys", found);
 
     return Array.from(found);
   }
@@ -54,21 +100,19 @@ define(["postmonger"], function (Postmonger) {
     const set = new Set();
     (schemaFields || []).forEach((f) => {
       const fullPath = f.key || "";
-      const short = (fullPath.split(".").pop() || "").trim();
+      const short = shortFromFullPath(normalizeFullPathWithQuotes(fullPath));
       if (short) set.add(short);
     });
     (extras || []).forEach((x) => set.add(x));
     return set;
   }
 
-  // Valider les champs de la data extension avant de sauvegarder le message
   function validateMessageTokens(message, schemaFields, opts = {}) {
     const { caseInsensitive = true, extras = ["ContactKey"] } = opts;
 
     const tokens = extractPersonalizationKeys(message);
     const available = buildAvailableShortNames(schemaFields, extras);
 
-    // Si insensible à la casse, on normalise tout en lower
     if (caseInsensitive) {
       const lowerAvail = new Set(Array.from(available, (s) => s.toLowerCase()));
       const missing = tokens.filter((t) => !lowerAvail.has(t.toLowerCase()));
@@ -91,49 +135,69 @@ define(["postmonger"], function (Postmonger) {
     }
   }
 
-  // ---------- Mapping champs ----------
+  // Mapping champs
   function buildFieldMappingsFromSchema() {
     fieldMappings = {};
     (schemaFields || []).forEach((f) => {
-      const fullPath = f.key || "";
-      const short = (fullPath.split(".").pop() || "").trim();
-      if (short) fieldMappings[short] = fullPath;
+      const rawFull = f.key || "";
+      const normalized = normalizeFullPathWithQuotes(rawFull);
+      const short = shortFromFullPath(normalized); // ex: CampaignMember:MobilePhone
+      if (short) fieldMappings[short] = normalized;
     });
+    // Virtuel
     fieldMappings["ContactKey"] = "Contact.Key";
   }
 
-  // %%FirstName%% -> {{Event.DE...FirstName}}
+  // %%Short%% -> {{Event.DE... "Short" }} (avec guillemets si ":" dans le short)
   function replaceShortWithFull(text) {
     if (!text) return text;
     const shorts = Object.keys(fieldMappings).sort(
       (a, b) => b.length - a.length
     );
+
     shorts.forEach((shortName) => {
-      const fullPath = fieldMappings[shortName];
+      let fullPath = fieldMappings[shortName];
       if (!fullPath) return;
-      const re = new RegExp("%%" + shortName + "%%", "g");
+      fullPath = normalizeFullPathWithQuotes(fullPath);
+
+      const re = new RegExp(
+        "%%\\s*" +
+          shortName.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&") +
+          "\\s*%%",
+        "g"
+      );
       text = text.replace(re, "{{" + fullPath + "}}");
     });
+
     return text;
   }
 
-  // {{Event.DE...FirstName}} -> %%FirstName%%
+  // {{Event.DE..."Short"}} -> %%Short%%
   function replaceFullWithShort(text) {
     if (!text) return text;
-    return text.replace(/\{\{([^}]+)\}\}/g, function (m, path) {
-      const last = (path.split(".").pop() || "").trim();
+
+    return text.replace(/\{\{\s*([^}]+?)\s*\}\}/g, function (_m, path) {
+      const normalized = normalizeFullPathWithQuotes(path);
+
       const knownShort = Object.keys(fieldMappings).find(
-        (s) => fieldMappings[s] === path
+        (s) => normalizeFullPathWithQuotes(fieldMappings[s]) === normalized
       );
       if (knownShort) return "%%" + knownShort + "%%";
-      if (/^[A-Za-z0-9_]+$/.test(last)) return "%%" + last + "%%";
-      return m;
+
+      const short = shortFromFullPath(normalized);
+      return short ? "%%" + short + "%%" : _m;
     });
   }
 
-  // Quand le contenu du textarea change (tape, collage, OU événement synthétique),
-  // relancer la validation et mettre à jour le bouton "Done"
+  // UI bindings de base
   $(document).on("input", "#messageContent", function () {
+    // mettre à jour compteur si présent
+    const val = this.value || "";
+    if ($("#characterCount").length) {
+      $("#characterCount").text(
+        `≈ ${getNormalizedLength(val)} / 160 caractères`
+      );
+    }
     validateAndToggleNext();
   });
 
@@ -141,19 +205,18 @@ define(["postmonger"], function (Postmonger) {
     validateAndToggleNext();
   });
 
-  // ---------- UI ----------
   function onRender() {
-    // Ne pas toucher à #smsTemplate (géré par React)
     connection.trigger("ready");
     connection.trigger("requestSchema");
     connection.trigger("requestTokens");
 
-    // Insertion de token depuis #availableFields
+    // Insertion de token depuis #availableFields vers la textarea
     $("#availableFields").on("change", function () {
       const fullPath = $(this).val();
       if (!fullPath) return;
-      const shortName = fullPath.split(".").pop();
-      fieldMappings[shortName] = fullPath;
+      const normalized = normalizeFullPathWithQuotes(fullPath);
+      const shortName = shortFromFullPath(normalized);
+      fieldMappings[shortName] = normalized;
 
       const node = document.getElementById("messageContent");
       if (!node) return;
@@ -183,44 +246,7 @@ define(["postmonger"], function (Postmonger) {
     }
   }
 
-  // // Insérer un champ de personnalisation choisi dans le <select>
-  $("#availableFields").on("change", function () {
-    const $select = $(this);
-    const fieldPath = $select.val(); // ex. "Contact.Email"
-    if (!fieldPath) return; // rien choisi
-
-    const displayName = $select.find("option:selected").text().trim();
-    const shortName = fieldPath.split(".").pop(); // ex. "Email"
-
-    // Mémoriser la correspondance court ↔︎ complet
-    fieldMappings[shortName] = fieldPath;
-
-    const shortField = `%%${shortName}%%`;
-
-    // Insertion au curseur
-    const $msg = $("#messageContent");
-    const node = $msg[0];
-    const cursorPos = node.selectionStart;
-    const newText =
-      $msg.val().substring(0, cursorPos) +
-      shortField +
-      $msg.val().substring(cursorPos);
-    $msg.val(newText);
-
-    // Mettre à jour le compteur et la position du curseur
-    $("#characterCount").text(
-      `≈ ${getNormalizedLength(newText)} / 160 caractères`
-    );
-    node.setSelectionRange(
-      cursorPos + shortField.length,
-      cursorPos + shortField.length
-    );
-    $msg.focus();
-
-    // (optionnel) revenir sur la première option neutre
-    $select.prop("selectedIndex", 0);
-  });
-
+  // Schéma (remplissage des selects)
   function onRequestedSchema(data) {
     if (!data || !data.schema) {
       $("#availableFields").html(
@@ -237,22 +263,28 @@ define(["postmonger"], function (Postmonger) {
 
     // Peupler depuis le schema
     schemaFields.forEach(function (field) {
-      const fullPath = field.key || "";
+      const rawFullPath = field.key || "";
+      const normalized = normalizeFullPathWithQuotes(rawFullPath);
       const fieldName =
         field.name ||
         field.label ||
         field.displayName ||
-        fullPath.split(".").pop() ||
+        shortFromFullPath(normalized) ||
         "Champ";
-      const icon = getFieldIcon(fullPath);
+      const icon = getFieldIcon(normalized);
 
-      if (/phone|mobile|tel/i.test(fullPath)) {
-        $("#phoneField").append(
-          `<option value="{{${fullPath}}}">${fieldName}</option>`
-        );
+      // --- Options téléphone : créer via DOM et stocker le chemin en data-path ---
+      if (/phone|mobile|tel/i.test(normalized)) {
+        const $opt = $("<option>")
+          .text(fieldName)
+          .attr("data-path", normalized)
+          .val(shortFromFullPath(normalized)); // value lisible (facultative)
+        $("#phoneField").append($opt);
       }
+
+      // availableFields (pour insérer des %%tokens%% dans la textarea)
       $("#availableFields").append(
-        `<option value="${fullPath}">${icon} ${fieldName}</option>`
+        `<option value="${rawFullPath}">${icon} ${fieldName}</option>`
       );
     });
 
@@ -263,7 +295,7 @@ define(["postmonger"], function (Postmonger) {
 
     buildFieldMappingsFromSchema();
 
-    // avertir initialize() si une conversion attend le mapping
+    // prévenir initialize() qu'on a fini de mapper
     $(document).trigger("schema:mapped");
 
     setFirstPhoneIfEmpty();
@@ -284,9 +316,8 @@ define(["postmonger"], function (Postmonger) {
     return "🔤";
   }
 
-  // ---------- Cycle de vie ----------
+  // Cycle de vie
   async function initialize(data) {
-    console.log("initialize payload", data);
     payload = data || {};
 
     // Demander schema/tokens
@@ -298,33 +329,76 @@ define(["postmonger"], function (Postmonger) {
     let restoredPhone = "";
     let restoredMsgFull = "";
     let restoredTemplateId = "";
+    let restoredCampaignCode = "";
+    let restoredSmsName = "";
 
     inArgs.forEach((obj) => {
-      if (obj.phoneField) restoredPhone = obj.phoneField;
+      if (obj.phoneField) restoredPhone = obj.phoneField; // attendu: {{Event.DE..."Task:Column"}}
       if (obj.messageContent) restoredMsgFull = obj.messageContent; // {{Full.Path}}
       if (obj.templateId) restoredTemplateId = obj.templateId;
+      if (obj.templateId) restoredTemplateId = obj.templateId;
+      if (obj.campaignCode) restoredCampaignCode = obj.campaignCode; // <--- NEW
+      if (obj.smsName) restoredSmsName = obj.smsName;
     });
-
-    if (restoredPhone) $("#phoneField").val(restoredPhone);
 
     if (restoredTemplateId) {
       const node = document.getElementById("smsTemplate");
       if (node) setReactValue(node, restoredTemplateId);
     }
 
+    if (restoredCampaignCode) {
+      $("#campaignCode").val(restoredCampaignCode);
+    } // <--- NEW
+    if (restoredSmsName) {
+      $("#smsName").val(restoredSmsName);
+    }
+
+    // Restaurer le message ({{…}} -> %%…%%)
     if (restoredMsgFull) {
-      if (Object.keys(fieldMappings).length > 0) {
+      const doRestoreMsg = function () {
         const shortMsg = replaceFullWithShort(restoredMsgFull);
         const node = document.getElementById("messageContent");
         if (node) setReactValue(node, shortMsg);
+        validateAndToggleNext();
+      };
+
+      if (Object.keys(fieldMappings).length > 0) {
+        doRestoreMsg();
       } else {
-        // attend que le schema soit mappé
-        $(document).one("schema:mapped", function () {
-          const shortMsg = replaceFullWithShort(restoredMsgFull);
-          const node = document.getElementById("messageContent");
-          if (node) setReactValue(node, shortMsg);
-          validateAndToggleNext();
-        });
+        $(document).one("schema:mapped", doRestoreMsg);
+      }
+    }
+
+    // Restaurer le phoneField (sélection dans le <select>) une fois les options présentes
+    if (restoredPhone) {
+      const tryRestore = function () {
+        const match = String(restoredPhone)
+          .trim()
+          .match(/^\{\{\s*(.+?)\s*\}\}$/);
+        const restoredPath = match
+          ? normalizeFullPathWithQuotes(match[1])
+          : null;
+        if (restoredPath) {
+          let found = false;
+          $("#phoneField option").each(function () {
+            const p = $(this).attr("data-path");
+            if (p && normalizeFullPathWithQuotes(p) === restoredPath) {
+              $(this).prop("selected", true);
+              found = true;
+              return false;
+            }
+          });
+          if (!found) {
+            // fallback lisible pour l'utilisateur
+            $("#phoneField").val(shortFromFullPath(restoredPath));
+          }
+        }
+      };
+
+      if ($("#phoneField option").length > 1) {
+        tryRestore();
+      } else {
+        $(document).one("schema:mapped", tryRestore);
       }
     }
 
@@ -333,12 +407,12 @@ define(["postmonger"], function (Postmonger) {
     connection.trigger("ready");
   }
 
-  // ---------- Validation & Save ----------
+  // Validation & Save
   function validateForm() {
     let ok = true;
 
-    const phoneVal = $("#phoneField").val();
-    if (!phoneVal) {
+    // Vérifie qu'une option est sélectionnée (on lit data-path au save)
+    if (!$("#phoneField option:selected").length) {
       $("#phoneFieldError").text(
         "Veuillez sélectionner le champ numéro de téléphone."
       );
@@ -355,7 +429,7 @@ define(["postmonger"], function (Postmonger) {
     } else {
       const check = validateMessageTokens(msg, schemaFields, {
         caseInsensitive: true,
-        extras: ["ContactKey"], // ajoute ici d'autres champs “virtuels” si besoin
+        extras: ["ContactKey"],
       });
 
       if (!check.isValid) {
@@ -378,7 +452,6 @@ define(["postmonger"], function (Postmonger) {
       button: "next",
       text: "Done",
       visible: ok,
-      // background: ok ? "#af00bd" : "#CCCCCC",
       enabled: ok,
     });
   }
@@ -389,30 +462,48 @@ define(["postmonger"], function (Postmonger) {
       return;
     }
 
-    const phoneField = $("#phoneField").val() || "";
+    // --- Construire phoneField depuis l'option sélectionnée (data-path) ---
+    const $selOpt = $("#phoneField option:selected");
+    let phoneField = "";
+    if ($selOpt.length) {
+      const rawPath = $selOpt.attr("data-path") || "";
+      const normalizedPath = normalizeFullPathWithQuotes(rawPath);
+      if (normalizedPath) {
+        phoneField = "{{" + normalizedPath + "}}";
+      }
+    }
+
+    // Message
     const node = document.getElementById("messageContent");
     const shortMsg = node ? node.value || "" : "";
     const templateNode = document.getElementById("smsTemplate");
     const templateId = templateNode ? templateNode.value || "" : "";
 
+    // Assurer le mapping à jour
     buildFieldMappingsFromSchema();
+
+    // Conversion %%Short%% -> {{FullPath}} (avec guillemets si ":" dans le dernier segment)
     let messageContent = replaceShortWithFull(shortMsg);
 
+    // Autres champs optionnels
     const mid =
       typeof buid === "number" || typeof buid === "string" ? String(buid) : "";
     const messageType = $("#messageType")?.val?.() || "SMS";
     const smsName = $("#smsName").val() || "";
     const campaignCode = $("#campaignCode").val() || "";
 
+    console.log("Phonefield : ", phoneField);
+    console.log("Message : ", messageContent);
+
     const inArgs = {
       contactKey: "{{Contact.Key}}",
-      phoneField,
-      messageContent,
+      phoneField, // {{Event.DE..."Task:Column"}} correctement formé
+      messageContent, // {{Event.DE..."Task:Column"}}
       messageType,
       buid: mid,
       campaignCode: campaignCode || "",
       smsName: smsName || "",
-      // smsCount: "1", --- IGNORE ---
+      // templateId: templateId || "", // décommente si tu dois le passer à l'exécution
     };
 
     payload.arguments = payload.arguments || {};

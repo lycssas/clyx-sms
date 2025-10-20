@@ -1,5 +1,4 @@
 import "dotenv/config";
-import { logger } from "./logger.js";
 import { sendAdminAlertIncident } from "./monitoring/monitoring.js";
 
 import { Pool } from "pg";
@@ -31,6 +30,29 @@ export async function query(text, params) {
   } catch (err) {
     const data = {
       app: "clyx-sms",
+      env: "Prod",
+      status: "error",
+      error_type: "DATABASE_ERROR",
+      error_message: err.message,
+      error_code: err.code || null,
+      httpstatus: 500,
+      buid: null,
+      occured_at: new Date().toISOString(),
+      stack_trace: err.stack || null,
+      action: "QUERY",
+    };
+    await sendAdminAlertIncident(data, MONITORING_ADD_1);
+    await sendAdminAlertIncident(data, MONITORING_ADD_2);
+    throw err;
+  }
+}
+
+export async function closePool() {
+  try {
+    await pool.end();
+  } catch (err) {
+    const data = {
+      app: "clyx-sms",
       env: "local",
       status: "error",
       error_type: "DATABASE_ERROR",
@@ -41,22 +63,9 @@ export async function query(text, params) {
       occured_at: new Date().toISOString(),
       stack_trace: err.stack || null,
       EmailAddress: "amadoungom@agencelycs.com",
-      action: "UPSERT_Rows",
+      action: "CLOSE DATABASE",
     };
-    // console.log("Data:", data);
-    const result = await sendAdminAlertIncident(data, MONITORING_ADD_1);
-    const result2 = await sendAdminAlertIncident(data, MONITORING_ADD_2);
-    console.log("monitor ; ", result);
-    // logger.error("Database", { err: err.stack || err.message });
-    throw err;
-  }
-}
-
-export async function closePool() {
-  try {
-    await pool.end();
-    console.log("Database connection pool closed.");
-  } catch (err) {
-    logger.error("Database", { err: err.stack || err.message });
+    await sendAdminAlertIncident(data, MONITORING_ADD_1);
+    await sendAdminAlertIncident(data, MONITORING_ADD_2);
   }
 }
