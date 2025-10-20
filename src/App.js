@@ -39,6 +39,16 @@ export default function App() {
         label: "✈️ ASM - Changement horaire",
         text: "M/Mme %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%TECH_OldDateDepart__c%% est modifié.\n• Nouvelle heure de départ : %%TECH_NvlHeureDepart__c%% avec une escale à %%CampaignMember:Campaign:Escale__c%% \n• Convocation : %%TECH_NvlHeureDepart__c%% (heure - 2h à gérer par la DE/logique)\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et vous remercions de votre compréhension.\nCordialement,\nService Réservation\nAir Côte d’Ivoire – Abidjan",
       },
+      {
+        id: "asm_changement_horaire",
+        label: "ASM - Changement horaire",
+        text: "Bonjour %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%CampaignMember:Campaign:TECH_OldDateDepart__c%% (initialement prévu à %%CampaignMember:Campaign:TECH_OldHeureDepart__c%%), connaîtra un retard.\n• Nouvelle heure de départ : %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%%\n• Convocation : %%CampaignMember:Campaign:TechConvocationTime__c%%(heure - 2h à gérer par la DE/logique)\n• Arrivée estimée : %%CampaignMember:Campaign:TECH_NvlHeureArrivee__c%%\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et restons à votre entière disposition.\nCordialement,\nService Réservation\nAir Côte d’Ivoire",
+      },
+      {
+        id: "asm_changement_itineraire",
+        label: "ASM - Changement Itinéraire",
+        text: "Bonjour %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%CampaignMember:Campaign:TECH_OldDateDepart__c%% est modifié.\n• Nouvelle heure de départ : %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%% avec une escale à %%CampaignMember:Campaign:Escale__c%%\n• Convocation : %%CampaignMember:Campaign:TechConvocationTime__c%%\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et vous remercions de votre compréhension.\nCordialement,\nService Réservation\nAir Côte d’Ivoire – Abidjan",
+      },
     ],
     []
   );
