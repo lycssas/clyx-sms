@@ -63,7 +63,7 @@ export async function flushTrackingSMS({ id, push_id, status }) {
   try {
     const row = await getSmsToTracking({ id });
 
-    console.log("Upsert tracking row :  ", row);
+    // console.log("Upsert tracking row :  ", row);
 
     if (!row) return;
 
@@ -90,9 +90,9 @@ export async function flushTrackingSMS({ id, push_id, status }) {
       ],
     };
 
-    console.log("Payload for SFMC tracking SMS: ", payload);
+    // console.log("Payload for SFMC tracking SMS: ", payload);
 
-    console.log("MC_DE_TRACKING_SMS: ", MC_DE_TRACKING_SMS);
+    // console.log("MC_DE_TRACKING_SMS: ", MC_DE_TRACKING_SMS);
 
     const rep = await upsertRows(payload, MC_DE_TRACKING_SMS);
 

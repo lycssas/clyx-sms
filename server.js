@@ -147,7 +147,7 @@ app.post("/execute", async (req, res) => {
 
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
-  console.log("DLR received:", req.query);
+  console.log("DLR received:");
   const { push_id, to, ret_id, status } = req.query;
 
   try {
@@ -160,11 +160,11 @@ app.get("/recept", async (req, res) => {
       return res.sendStatus(200);
     }
 
-    console.log("Updating DLR status for SMS ID ", rec.id);
+    // console.log("Updating DLR status for SMS ID ", rec.id);
 
     const rep = await flushTrackingSMS({ id: rec.id, push_id, status });
 
-    console.log("Flash tracking sms ", rep);
+    // console.log("Flash tracking sms ", rep);
 
     await updateDlrStatus({ id: rec.id, rawStatus: status, pushId: push_id });
 
