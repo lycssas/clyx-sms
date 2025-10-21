@@ -1,13 +1,10 @@
-import { sendAdminAlertIncident } from "./monitoring/monitoring.js";
+import { sendAdminAlertIncident } from "./monitoring.js";
 import dotenv from "dotenv";
 import { customAlphabet, nanoid } from "nanoid";
 import { query } from "./dbs.js";
 dotenv.config();
 
-const {
-  MONITORING_ADD_1,
-  MONITORING_ADD_2,
-} = process.env;
+const { MONITORING_ADD_1, MONITORING_ADD_2 } = process.env;
 
 // import { upsertUrl, linkUrlToSms } from "./shortnerfunctions.js";
 
