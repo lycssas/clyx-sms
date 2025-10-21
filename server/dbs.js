@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { sendAdminAlertIncident } from "./monitoring/monitoring.js";
+import { sendAdminAlertIncident } from "./monitoring.js";
 
 import { Pool } from "pg";
 

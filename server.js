@@ -14,8 +14,9 @@ import {
   findLastPendingById,
 } from "./server/dbsquery.js";
 import { query } from "./server/dbs.js";
-import { sendAdminAlertIncident } from "./server/monitoring/monitoring.js";
+import { sendAdminAlertIncident } from "./server/monitoring.js";
 import { fileURLToPath } from "url";
+import { flushTrackingSMS } from "./server/sfmc.service.js";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -146,15 +147,24 @@ app.post("/execute", async (req, res) => {
 
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
+  console.log("DLR received:");
   const { push_id, to, ret_id, status } = req.query;
 
   try {
     const numberPart = ret_id.split("_")[1];
     // const rec = await findLastPendingByPhone(to);
+    console.log("Looking for record with ID:", numberPart);
     const rec = await findLastPendingById(numberPart);
+    // console.log("Found record for DLR:", rec);
     if (!rec) {
       return res.sendStatus(200);
     }
+
+    // console.log("Updating DLR status for SMS ID ", rec.id);
+
+    const rep = await flushTrackingSMS({ id: rec.id, push_id, status });
+
+    // console.log("Flash tracking sms ", rep);
 
     await updateDlrStatus({ id: rec.id, rawStatus: status, pushId: push_id });
 
@@ -232,21 +242,21 @@ app.listen(PORT, "0.0.0.0", async () => {
     console.log("Database connection pool status:", rows);
     console.log(`Accédez à http://0.0.0.0:${PORT}/ pour votre custom activity`);
   } catch (err) {
-     const data = {
-       app: "clyx-sms",
-       env: "PROD",
-       status: "error",
-       error_type: "RUNNING_SERVER_ERROR",
-       error_message: err.message || null,
-       error_code: err.code || null,
-       httpstatus: 500,
-       buid: null,
-       occured_at: new Date().toISOString(),
-       stack_trace: err.stack || null,
-       EmailAddress: null,
-       action: "Run server",
-     };
-     await sendAdminAlertIncident(data, MONITORING_ADD_1);
-     await sendAdminAlertIncident(data, MONITORING_ADD_2);
+    const data = {
+      app: "clyx-sms",
+      env: "PROD",
+      status: "error",
+      error_type: "RUNNING_SERVER_ERROR",
+      error_message: err.message || null,
+      error_code: err.code || null,
+      httpstatus: 500,
+      buid: null,
+      occured_at: new Date().toISOString(),
+      stack_trace: err.stack || null,
+      EmailAddress: null,
+      action: "Run server",
+    };
+    await sendAdminAlertIncident(data, MONITORING_ADD_1);
+    await sendAdminAlertIncident(data, MONITORING_ADD_2);
   }
 });

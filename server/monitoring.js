@@ -4,11 +4,11 @@ import { nanoid } from "nanoid";
 dotenv.config();
 
 const {
-  MC_SUBDOMAIN,
-  MC_DEFINITION_KEY,
-  MC_CLIENT_ID,
-  MC_CLIENT_SECRET,
-  MC_ACCOUNT_ID,
+  LYCS_MC_SUBDOMAIN,
+  LYCS_MC_DEFINITION_KEY,
+  LYCS_MC_CLIENT_ID,
+  LYCS_MC_CLIENT_SECRET,
+  LYCS_MC_ACCOUNT_ID,
 } = process.env;
 
 async function getMcToken() {
@@ -17,11 +17,11 @@ async function getMcToken() {
   const now = Date.now();
   if (token && now < tokenExp) return token; // token encore valable
 
-  const url = `https://${MC_SUBDOMAIN}.auth.marketingcloudapis.com/v2/token`;
+  const url = `https://${LYCS_MC_SUBDOMAIN}.auth.marketingcloudapis.com/v2/token`;
   const { data } = await axios.post(url, {
-    client_id: MC_CLIENT_ID,
-    client_secret: MC_CLIENT_SECRET,
-    account_id: MC_ACCOUNT_ID,
+    client_id: LYCS_MC_CLIENT_ID,
+    client_secret: LYCS_MC_CLIENT_SECRET,
+    account_id: LYCS_MC_ACCOUNT_ID,
     grant_type: "client_credentials",
   });
 
@@ -35,7 +35,7 @@ export async function sendAdminAlertIncident(data, admin_email) {
     const messageKey = await nanoid(16);
     const mcToken = await getMcToken();
     const payload = {
-      definitionKey: MC_DEFINITION_KEY,
+      definitionKey: LYCS_MC_DEFINITION_KEY,
       recipient: {
         contactKey: messageKey,
         to: admin_email,
@@ -58,9 +58,9 @@ export async function sendAdminAlertIncident(data, admin_email) {
     };
 
     // const body = JSON.stringify(payload);
-    console.log("Admin alert....");
+    // console.log("Admin alert....");
 
-    const url = `https://${MC_SUBDOMAIN}.rest.marketingcloudapis.com/messaging/v1/email/messages/${messageKey}`;
+    const url = `https://${LYCS_MC_SUBDOMAIN}.rest.marketingcloudapis.com/messaging/v1/email/messages/${messageKey}`;
 
     const response = await axios.post(url, payload, {
       headers: {
@@ -70,6 +70,6 @@ export async function sendAdminAlertIncident(data, admin_email) {
     });
   } catch (error) {
     // logger.error("Error sending email alert:", error);
-    console.log("L'erreur vient d'ici");
+    console.log("Admin alert error:", error);
   }
 }
