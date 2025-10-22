@@ -4,17 +4,10 @@ import { sendAdminAlertIncident } from "./monitoring.js";
 import { Pool } from "pg";
 
 const {
-  DB_HOST,
-  DB_USER,
-  DB_PASSWORD,
-  DB_NAME,
-  DB_PORT,
   DATABASE_URL,
   MONITORING_ADD_1,
   MONITORING_ADD_2,
 } = process.env;
-
-const db_url = `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
 
 export const pool = new Pool({
   // connectionString: db_url,
