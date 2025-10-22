@@ -155,16 +155,14 @@ app.get("/recept", async (req, res) => {
     // const rec = await findLastPendingByPhone(to);
     console.log("Looking for record with ID:", numberPart);
     const rec = await findLastPendingById(numberPart);
-    // console.log("Found record for DLR:", rec);
+    console.log("Found record for DLR:", rec);
     if (!rec) {
       return res.sendStatus(200);
     }
 
-    // console.log("Updating DLR status for SMS ID ", rec.id);
+    console.log("Updating DLR status for SMS ID ", rec.id);
 
     const rep = await flushTrackingSMS({ id: rec.id, push_id, status });
-
-    // console.log("Flash tracking sms ", rep);
 
     await updateDlrStatus({ id: rec.id, rawStatus: status, pushId: push_id });
 

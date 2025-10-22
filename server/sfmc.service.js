@@ -35,6 +35,7 @@ async function getMcToken() {
 async function upsertRows(rows, deKey) {
   try {
     const accessToken = await getMcToken();
+    console.log("Access token obtained for SFMC : ", accessToken);
     const url = `https://${MC_SUBDOMAIN}.rest.marketingcloudapis.com/data/v1/async/dataextensions/key:${deKey}/rows`;
     const res = await axios.put(url, rows, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -90,9 +91,9 @@ export async function flushTrackingSMS({ id, push_id, status }) {
       ],
     };
 
-    // console.log("Payload for SFMC tracking SMS: ", payload);
+    console.log("Payload for SFMC tracking SMS: ", payload);
 
-    // console.log("MC_DE_TRACKING_SMS: ", MC_DE_TRACKING_SMS);
+    console.log("MC_DE_TRACKING_SMS: ", MC_DE_TRACKING_SMS);
 
     const rep = await upsertRows(payload, MC_DE_TRACKING_SMS);
 
