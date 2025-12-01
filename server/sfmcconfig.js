@@ -3,7 +3,6 @@ import jwt, { decode } from "jsonwebtoken";
 import { query } from "./dbs.js";
 import { sendAdminAlertIncident } from "./monitoring.js";
 
-
 const jwtSecret = process.env.JWT_SECRET;
 
 const MONITORING_ADD_1 = process.env.MONITORING_ADD_1;
@@ -44,46 +43,47 @@ export async function verifySfmcJwt(req, res, next) {
     if (Array.isArray(payload.inArguments) && payload.inArguments.length > 0) {
       const inArgs = payload.inArguments[0];
       buid = inArgs.buid || null;
+
+      // Récupérer le jwt_secret pour ce buid en base
+      const envResult = await query(
+        "SELECT buid, jwt_secret, name FROM users WHERE buid = $1",
+        [buid]
+      );
+
+      if (envResult.rowCount === 0 || !envResult[0].jwt_secret) {
+        console.error("No environment/jwt_secret configured for buid:", buid);
+        return res.status(401).json({ error: "Unknown environment" });
+      }
+
+      const env = envResult[0];
+
+      // Vérifier le JWT avec le bon secret
+      const decodedVerified = jwt.verify(token, env.jwt_secret);
+
+      // Attacher les infos à la requête
+      req.sfmcJwt = decodedVerified; // payload vérifié
+
+      next();
+    } else {
+      next();
     }
-
-    // Récupérer le jwt_secret pour ce buid en base
-    // const envResult = await query(
-    //   "SELECT buid, jwt_secret, name FROM environment WHERE buid = $1",
-    //   [buid]
-    // );
-
-    // if (envResult.rowCount === 0 || !envResult.rows[0].jwt_secret) {
-    //   console.error("No environment/jwt_secret configured for buid:", buid);
-    //   return res.status(401).json({ error: "Unknown environment" });
-    // }
-
-    // const env = envResult.rows[0];
-
-    // Vérifier le JWT avec le bon secret
-    // const decodedVerified = jwt.verify(token, env.jwt_secret);
-    const decodedVerified = jwt.verify(token, jwtSecret);
-
-    // Attacher les infos à la requête
-    req.sfmcJwt = decodedVerified; // payload vérifié
-
-    next();
   } catch (err) {
     const data = {
-          app: "clyx-sms",
-          env: "PROD",
-          status: "error",
-          error_type: "SFMC_JWT_ERROR",
-          error_message: err.message,
-          error_code: err.code || null,
-          httpstatus: 500,
-          buid: null,
-          occured_at: new Date().toISOString(),
-          stack_trace: err.stack || null,
-          EmailAddress: null,
-          action: "Decode SFMC JWT",
-        };
-        sendAdminAlertIncident(data, MONITORING_ADD_1);
-        sendAdminAlertIncident(data, MONITORING_ADD_2);
+      app: "clyx-sms",
+      env: "PROD",
+      status: "error",
+      error_type: "SFMC_JWT_ERROR",
+      error_message: err.message,
+      error_code: err.code || null,
+      httpstatus: 500,
+      buid: null,
+      occured_at: new Date().toISOString(),
+      stack_trace: err.stack || null,
+      EmailAddress: null,
+      action: "Decode SFMC JWT",
+    };
+    sendAdminAlertIncident(data, MONITORING_ADD_1);
+    sendAdminAlertIncident(data, MONITORING_ADD_2);
     return res.status(401).json({ error: "Invalid SFMC JWT" });
   }
 }
