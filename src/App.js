@@ -30,18 +30,38 @@ export default function App() {
         text: "",
       },
       {
-        id: "asm_changement_horaire",
-        label: "ASM - Changement horaire",
-        text: "Bonjour %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%CampaignMember:Campaign:TECH_OldDateDepart__c%% (initialement prévu à %%CampaignMember:Campaign:TECH_OldHeureDepart__c%%), connaîtra un retard.\n• Nouvelle heure de départ : %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%%\n• Convocation : %%CampaignMember:Campaign:TechConvocationTime__c%%(heure - 2h à gérer par la DE/logique)\n• Arrivée estimée : %%CampaignMember:Campaign:TECH_NvlHeureArrivee__c%%\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et restons à votre entière disposition.\nCordialement,\nService Réservation\nAir Côte d’Ivoire",
+        id: "sms_1",
+        label: "IRGHO FR",
+        text: "Bonjour %%CampaignMember:Name%%, \nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolOld__c%%, %%CampaignMember:Campaign:RouteOld__c%% du %%CampaignMember:Campaign:TECH_OldDateDepart__c%%, initialement prévu à %%CampaignMember:Campaign:TECH_OldHeureDepart__c%%, connaîtra un retard. \nNouvelle heure de départ : %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%% \nConvocation : %%CampaignMember:Campaign:TechConvocationTime__c%% \nArrivée estimée : %%CampaignMember:Campaign:TECH_NvlHeureArrivee__c%% \nNous vous prions d’accepter nos sincères excuses pour ce désagrément et restons à votre entière disposition. \nCordialement, \nService Réservation \nAir Côte d’Ivoire",
       },
       {
-        id: "asm_changement_itineraire",
-        label: "ASM - Changement Itinéraire",
-        text: "Bonjour %%CampaignMember:Name%%,\nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolNew__c%%, %%CampaignMember:Campaign:RouteNew__c%% du %%CampaignMember:Campaign:TECH_OldDateDepart__c%% est modifié.\n• Nouvelle heure de départ : %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%% avec une escale à %%CampaignMember:Campaign:Escale__c%%\n• Convocation : %%CampaignMember:Campaign:TechConvocationTime__c%%\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et vous remercions de votre compréhension.\nCordialement,\nService Réservation\nAir Côte d’Ivoire – Abidjan",
+        id: "sms_2",
+        label: "IRGHO EN",
+        text: "Dear %%CampaignMember:Name%%, \nWe would like to inform you that, due to operational reasons, flight %%CampaignMember:Campaign:NumeroVolOld__c%% from %%CampaignMember:Campaign:RouteOld__c%% on %%CampaignMember:Campaign:TECH_OldDateDepart__c%%, originally scheduled to depart at %%CampaignMember:Campaign:TECH_OldHeureDepart__c%%, will now operate as follows: \nNew departure time: %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%%\nCheck-in opens: %%CampaignMember:Campaign:TechConvocationTime__c%%\nEstimated arrival: %%CampaignMember:Campaign:TECH_NvlHeureArrivee__c%%\nWe sincerely regret any inconvenience this adjustment may cause and thank you for your kind understanding. Our team remains at your disposal should you require any assistance.\nIRGHO\n Kind regards, \nReservation Service \nAir Côte d’Ivoire",
+      },
+      {
+        id: "sms_3",
+        label: "IRGIT FR",
+        text: "Bonjour %%CampaignMember:Name%%, \nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolOld__c%%, %%CampaignMember:Campaign:RouteOld__c%% du %%CampaignMember:Campaign:TECH_OldDateDepart__c%% est modifié. \nNouvelle heure de départ : %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%% avec une escale à %%CampaignMember:Campaign:Escale__c%% \nConvocation : %%CampaignMember:Campaign:TechConvocationTime__c%%\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et vous remercions de votre compréhension.\nCordialement,\nService Réservation\nAir Côte d’Ivoire – Abidjan",
+      },
+      {
+        id: "sms_4",
+        label: "IRGIT EN",
+        text: "Dear %%CampaignMember:Name%%, \nWe wish to inform you that, due to operational constraints, flight %%CampaignMember:Campaign:NumeroVolOld__c%% from %%CampaignMember:Campaign:RouteOld__c%% on %%CampaignMember:Campaign:TECH_OldDateDepart__c%% has been adjusted as follows:\nNew departure time: %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%%\n(with a stopover in %%CampaignMember:Campaign:Escale__c%%)\nCheck-in opens: %%CampaignMember:Campaign:TechConvocationTime__c%%\nWe sincerely apologise for any inconvenience this may cause and thank you for your kind understanding. Should you require any assistance, our team remains at your disposal.\nKind regards,\nReservations Department\nAir Côte d’Ivoire Booking Service – Abidjan",
+      },
+      {
+        id: "sms_5",
+        label: "CANCEL FR",
+        text: "Bonjour %%CampaignMember:Name%%, \nEn raison de contraintes d’exploitation, le vol %%CampaignMember:Campaign:NumeroVolOld__c%%, %%CampaignMember:Campaign:RouteOld__c%% du %%CampaignMember:Campaign:TECH_OldDateDepart__c%%, initialement prévu à %%CampaignMember:Campaign:TECH_OldHeureDepart__c%%, est reporté.\nNouvelle heure de départ : %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%%\nConvocation : %%CampaignMember:Campaign:TechConvocationTime__c%%\nArrivée estimée : %%CampaignMember:Campaign:TECH_NvlHeureArrivee__c%%\nNous vous prions d’accepter nos sincères excuses pour ce désagrément et vous remercions de votre compréhension.\nCordialement,\nService Réservation\nAir Côte d’Ivoire – Abidjan",
+      },
+      {
+        id: "sms_6",
+        label: "CANCEL EN",
+        text: "Dear %%CampaignMember:Name%%, \nWe would like to inform you that, due to operational reasons, flight %%CampaignMember:Campaign:NumeroVolOld__c%% from %%CampaignMember:Campaign:RouteOld__c%% on %%CampaignMember:Campaign:TECH_OldDateDepart__c%%, originally scheduled to depart at %%CampaignMember:Campaign:TECH_OldHeureDepart__c%%, has been rescheduled as follows: \nNew departure time: %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%% \nCheck-in opens: %%CampaignMember:Campaign:TechConvocationTime__c%% \nEstimated arrival: %%CampaignMember:Campaign:TECH_NvlHeureArrivee__c%% We sincerely apologise for any inconvenience this may cause and thank you for your understanding. Our team remains at your disposal should you require any assistance. \nKind regards, \nReservation Service \nAir Côte d’Ivoire",
       },
     ],
     []
-  );
+  ); // ne change jamais
 
   const sampleSlugs = ["xXxXx", "XXXXX", "XxXxX"];
   const sampleUrlForSlug = () =>
@@ -115,7 +135,7 @@ export default function App() {
   const isPreviewDisabled = message.trim().length === 0;
 
   return (
-    <div className="App">
+    <div className="App" id="app-root">
       <div id="container">
         <div className="header">
           <img src={logo} width={40} alt="Lycs Logo" className="logo" />

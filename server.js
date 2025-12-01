@@ -17,6 +17,8 @@ import { query } from "./server/dbs.js";
 import { sendAdminAlertIncident } from "./server/monitoring.js";
 import { fileURLToPath } from "url";
 import { flushTrackingSMS } from "./server/sfmc.service.js";
+// import session from "express-session";
+import { verifySfmcJwt, initConfig } from "./server/sfmcconfig.js";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -46,12 +48,10 @@ function formatE164(number) {
   return number.replace(/^0+/, "").replace(/^00/, "+").replace(/^\+?/, "+");
 }
 
-app.post("/execute", async (req, res) => {
-  // console.log("Execute endpoint called");
-  // console.log("Body : ", req.body);
+app.post("/execute", verifySfmcJwt, async (req, res) => {
   try {
     // console.log("Processing /execute with payload:", req.body);
-    const args = req.body.inArguments?.[0] || {};
+    const args = req.sfmcJwt.inArguments?.[0] || {};
     const {
       phoneField,
       messageContent,
@@ -60,9 +60,9 @@ app.post("/execute", async (req, res) => {
       campaignCode,
       smsName,
     } = args;
-    const versionId = req.body?.definitionInstanceId || "";
-    const activityId = req.body?.activityId || "";
-    const journeyId = req.body?.journeyId || "";
+    const versionId = req.sfmcJwt?.definitionInstanceId || "";
+    const activityId = req.sfmcJwt?.activityId || "";
+    const journeyId = req.sfmcJwt?.journeyId || "";
 
     if (!phoneField || !messageContent || !contactKey || !buid) {
       return res.status(200).json({ outArguments: [{ statusCode: "400" }] });
@@ -110,8 +110,6 @@ app.post("/execute", async (req, res) => {
       ],
     };
 
-    // console.log("Payload ; ", payload);
-
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
       payload,
@@ -143,11 +141,9 @@ app.post("/execute", async (req, res) => {
   }
 });
 
-/* --------- /dlr : réception des accusés --------- */
-
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
-  console.log("DLR received:");
+  // console.log("DLR received:");
   const { push_id, to, ret_id, status } = req.query;
 
   try {
@@ -189,22 +185,22 @@ app.get("/recept", async (req, res) => {
 });
 
 // Routes de configuration Journey Builder
-app.post("/save", (req, res) => {
+app.post("/save", verifySfmcJwt, (req, res) => {
   console.log("save endpoint called");
   res.status(200).json({ success: true });
 });
 
-app.post("/publish", (req, res) => {
+app.post("/publish", verifySfmcJwt, (req, res) => {
   console.log("publish endpoint called");
   res.status(200).json({ success: true });
 });
 
-app.post("/validate", (req, res) => {
+app.post("/validate", verifySfmcJwt, (req, res) => {
   console.log("validate endpoint called");
   res.status(200).json({ success: true });
 });
 
-app.post("/stop", (req, res) => {
+app.post("/stop", verifySfmcJwt, (req, res) => {
   console.log("stop endpoint called");
   res.status(200).json({ success: true });
 });
@@ -221,6 +217,13 @@ app.get("/status", (req, res) => {
 app.get("/ping", (_req, res) => {
   res.status(200).send("pong");
 });
+
+app.get("/init", async (req, res) => {
+  // Récupérer les configurations depuis la base
+  await initConfig(req, res);
+});
+
+console.log("Serving static files from:", buildDir);
 
 app.use(express.static(buildDir));
 // app.use(express.static(path.join(__dirname, "public")));
