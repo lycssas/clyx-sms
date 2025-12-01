@@ -1,4 +1,4 @@
-define(["postmonger"], function (Postmonger) {
+define(["postmonger", "functions"], function (Postmonger, functions) {
   "use strict";
 
   var connection = new Postmonger.Session();
@@ -6,14 +6,29 @@ define(["postmonger"], function (Postmonger) {
   var schemaFields = [];
   var fieldMappings = {}; // shortName -> fullPath
   var buid = null;
+  var tokens = {}; // NEW
+  var subscriptionChecked = false; // NEW
 
   $(window).ready(onRender);
 
   connection.on("initActivity", initialize);
   connection.on("clickedNext", save);
   connection.on("requestedSchema", onRequestedSchema);
+
   connection.on("requestedTokens", function (t) {
-    if (t && t.MID) buid = t.MID;
+    if (t && t.MID) buid = t.MID; // buid récupéré automatiquement
+    tokens = t || {};
+
+    // On ne fait le check qu'une seule fois
+    if (!subscriptionChecked) {
+      subscriptionChecked = true;
+      functions.checkSubscriptionStatus({
+        buid: buid,
+        connection: connection,
+        validateAndToggleNext: validateAndToggleNext,
+        initUrl: "./init" // si tu veux override l’URL
+      });
+    }
   });
 
   // Met à jour proprement une textarea contrôlée (React-like)
@@ -191,7 +206,6 @@ define(["postmonger"], function (Postmonger) {
 
   // UI bindings de base
   $(document).on("input", "#messageContent", function () {
-    // mettre à jour compteur si présent
     const val = this.value || "";
     if ($("#characterCount").length) {
       $("#characterCount").text(
@@ -257,11 +271,9 @@ define(["postmonger"], function (Postmonger) {
 
     schemaFields = data.schema;
 
-    // Purge
     $("#phoneField").find("option:not(:first)").remove();
     $("#availableFields").find("option:not(:first)").remove();
 
-    // Peupler depuis le schema
     schemaFields.forEach(function (field) {
       const rawFullPath = field.key || "";
       const normalized = normalizeFullPathWithQuotes(rawFullPath);
@@ -273,29 +285,25 @@ define(["postmonger"], function (Postmonger) {
         "Champ";
       const icon = getFieldIcon(normalized);
 
-      // --- Options téléphone : créer via DOM et stocker le chemin en data-path ---
       if (/phone|mobile|tel/i.test(normalized)) {
         const $opt = $("<option>")
           .text(fieldName)
           .attr("data-path", normalized)
-          .val(shortFromFullPath(normalized)); // value lisible (facultative)
+          .val(shortFromFullPath(normalized));
         $("#phoneField").append($opt);
       }
 
-      // availableFields (pour insérer des %%tokens%% dans la textarea)
       $("#availableFields").append(
         `<option value="${rawFullPath}">${icon} ${fieldName}</option>`
       );
     });
 
-    // ContactKey optionnel
     $("#availableFields").append(
       `<option value="Contact.Key">🔑 Contact Key</option>`
     );
 
     buildFieldMappingsFromSchema();
 
-    // prévenir initialize() qu'on a fini de mapper
     $(document).trigger("schema:mapped");
 
     setFirstPhoneIfEmpty();
@@ -320,11 +328,9 @@ define(["postmonger"], function (Postmonger) {
   async function initialize(data) {
     payload = data || {};
 
-    // Demander schema/tokens
     connection.trigger("requestSchema");
     connection.trigger("requestTokens");
 
-    // Restauration
     const inArgs = payload?.arguments?.execute?.inArguments || [];
     let restoredPhone = "";
     let restoredMsgFull = "";
@@ -333,11 +339,10 @@ define(["postmonger"], function (Postmonger) {
     let restoredSmsName = "";
 
     inArgs.forEach((obj) => {
-      if (obj.phoneField) restoredPhone = obj.phoneField; // attendu: {{Event.DE..."Task:Column"}}
-      if (obj.messageContent) restoredMsgFull = obj.messageContent; // {{Full.Path}}
+      if (obj.phoneField) restoredPhone = obj.phoneField;
+      if (obj.messageContent) restoredMsgFull = obj.messageContent;
       if (obj.templateId) restoredTemplateId = obj.templateId;
-      if (obj.templateId) restoredTemplateId = obj.templateId;
-      if (obj.campaignCode) restoredCampaignCode = obj.campaignCode; // <--- NEW
+      if (obj.campaignCode) restoredCampaignCode = obj.campaignCode;
       if (obj.smsName) restoredSmsName = obj.smsName;
     });
 
@@ -348,12 +353,11 @@ define(["postmonger"], function (Postmonger) {
 
     if (restoredCampaignCode) {
       $("#campaignCode").val(restoredCampaignCode);
-    } // <--- NEW
+    }
     if (restoredSmsName) {
       $("#smsName").val(restoredSmsName);
     }
 
-    // Restaurer le message ({{…}} -> %%…%%)
     if (restoredMsgFull) {
       const doRestoreMsg = function () {
         const shortMsg = replaceFullWithShort(restoredMsgFull);
@@ -369,7 +373,6 @@ define(["postmonger"], function (Postmonger) {
       }
     }
 
-    // Restaurer le phoneField (sélection dans le <select>) une fois les options présentes
     if (restoredPhone) {
       const tryRestore = function () {
         const match = String(restoredPhone)
@@ -389,7 +392,6 @@ define(["postmonger"], function (Postmonger) {
             }
           });
           if (!found) {
-            // fallback lisible pour l'utilisateur
             $("#phoneField").val(shortFromFullPath(restoredPath));
           }
         }
@@ -411,7 +413,6 @@ define(["postmonger"], function (Postmonger) {
   function validateForm() {
     let ok = true;
 
-    // Vérifie qu'une option est sélectionnée (on lit data-path au save)
     if (!$("#phoneField option:selected").length) {
       $("#phoneFieldError").text(
         "Veuillez sélectionner le champ numéro de téléphone."
@@ -462,7 +463,6 @@ define(["postmonger"], function (Postmonger) {
       return;
     }
 
-    // --- Construire phoneField depuis l'option sélectionnée (data-path) ---
     const $selOpt = $("#phoneField option:selected");
     let phoneField = "";
     if ($selOpt.length) {
@@ -473,19 +473,15 @@ define(["postmonger"], function (Postmonger) {
       }
     }
 
-    // Message
     const node = document.getElementById("messageContent");
     const shortMsg = node ? node.value || "" : "";
     const templateNode = document.getElementById("smsTemplate");
     const templateId = templateNode ? templateNode.value || "" : "";
 
-    // Assurer le mapping à jour
     buildFieldMappingsFromSchema();
 
-    // Conversion %%Short%% -> {{FullPath}} (avec guillemets si ":" dans le dernier segment)
     let messageContent = replaceShortWithFull(shortMsg);
 
-    // Autres champs optionnels
     const mid =
       typeof buid === "number" || typeof buid === "string" ? String(buid) : "";
     const messageType = $("#messageType")?.val?.() || "SMS";
@@ -497,13 +493,13 @@ define(["postmonger"], function (Postmonger) {
 
     const inArgs = {
       contactKey: "{{Contact.Key}}",
-      phoneField, // {{Event.DE..."Task:Column"}} correctement formé
-      messageContent, // {{Event.DE..."Task:Column"}}
+      phoneField,
+      messageContent,
       messageType,
       buid: mid,
       campaignCode: campaignCode || "",
       smsName: smsName || "",
-      // templateId: templateId || "", // décommente si tu dois le passer à l'exécution
+      // templateId: templateId || "",
     };
 
     payload.arguments = payload.arguments || {};

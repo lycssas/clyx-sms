@@ -32,7 +32,7 @@
       "url": "https://clyxsms.agencelycs.com/execute",
       "verb": "POST",
       "format": "json",
-      "useJwt": false,
+      "useJwt": true,
       "timeout": 240000
     }
   },
@@ -40,22 +40,22 @@
     "save": {
       "url": "https://clyxsms.agencelycs.com/save",
       "verb": "POST",
-      "useJwt": false
+      "useJwt": true
     },
     "publish": {
       "url": "https://clyxsms.agencelycs.com/publish",
       "verb": "POST",
-      "useJwt": false
+      "useJwt": true
     },
     "validate": {
       "url": "https://clyxsms.agencelycs.com/validate",
       "verb": "POST",
-      "useJwt": false
+      "useJwt": true
     },
     "stop": {
       "url": "https://clyxsms.agencelycs.com/stop",
       "verb": "POST",
-      "useJwt": false
+      "useJwt": true
     }
   },
   "userInterfaces": {
