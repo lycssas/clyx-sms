@@ -42,7 +42,7 @@ app.use(express.json());
 const buildDir = path.join(process.cwd(), "build"); // CRA
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __dirname = path.dirname(__filename);
 
 function formatE164(number) {
   return number.replace(/^0+/, "").replace(/^00/, "+").replace(/^\+?/, "+");
