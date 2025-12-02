@@ -33,7 +33,7 @@ const axiosInstance = axios.create({
 });
 
 // Middleware
-app.use(cors());
+app.use(cors.default());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.raw({ type: "application/jwt", limit: "2mb" }));
