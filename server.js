@@ -1,3 +1,4 @@
+import * as cors from "cors";
 import bodyParser from "body-parser";
 import express from "express";
 import path from "path";
@@ -21,7 +22,6 @@ import { verifySfmcJwt, initConfig } from "./server/sfmcconfig.js";
 
 const app = express();
 const PORT = process.env.PORT;
-const cors = require('cors');
 
 const lamAccountId = process.env.LAM_ACCOUNTID;
 const lamPassWord = process.env.LAM_PASSWORD;
