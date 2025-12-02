@@ -1,5 +1,5 @@
 // middleware/verifySfmcJwt.js
-import jwt, { decode } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { query } from "./dbs.js";
 import { sendAdminAlertIncident } from "./monitoring.js";
 
