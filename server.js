@@ -149,14 +149,11 @@ app.get("/recept", async (req, res) => {
   try {
     const numberPart = ret_id.split("_")[1];
     // const rec = await findLastPendingByPhone(to);
-    console.log("Looking for record with ID:", numberPart);
+    // console.log("Looking for record with ID:", numberPart);
     const rec = await findLastPendingById(numberPart);
-    console.log("Found record for DLR:", rec);
     if (!rec) {
       return res.sendStatus(200);
     }
-
-    console.log("Updating DLR status for SMS ID ", rec.id);
 
     const rep = await flushTrackingSMS({ id: rec.id, push_id, status });
 
@@ -223,7 +220,7 @@ app.get("/init", async (req, res) => {
   await initConfig(req, res);
 });
 
-console.log("Serving static files from:", buildDir);
+// console.log("Serving static files from:", buildDir);
 
 app.use(express.static(buildDir));
 // app.use(express.static(path.join(__dirname, "public")));
