@@ -59,6 +59,66 @@ export default function App() {
         label: "CANCEL EN",
         text: "Dear %%CampaignMember:Name%%, \nWe would like to inform you that, due to operational reasons, flight %%CampaignMember:Campaign:NumeroVolOld__c%% from %%CampaignMember:Campaign:RouteOld__c%% on %%CampaignMember:Campaign:TECH_OldDateDepart__c%%, originally scheduled to depart at %%CampaignMember:Campaign:TECH_OldHeureDepart__c%%, has been rescheduled as follows: \nNew departure time: %%CampaignMember:Campaign:TECH_NvlHeureDepart__c%% \nCheck-in opens: %%CampaignMember:Campaign:TechConvocationTime__c%% \nEstimated arrival: %%CampaignMember:Campaign:TECH_NvlHeureArrivee__c%% We sincerely apologise for any inconvenience this may cause and thank you for your understanding. Our team remains at your disposal should you require any assistance. \nKind regards, \nReservation Service \nAir Côte d’Ivoire",
       },
+      {
+        id: "sms_7",
+        label: "Notification prise en charge bagages FR",
+        text: "Bonjour %%Case:Account:Name%%,\nNous sommes désolés pour le retard de votre bagage.\nNos équipes le recherchent activement.\nDossier %%Case:NumeroRequete__c%%.\nAir Côte d’Ivoire vous remercie.",
+      },
+      {
+        id: "sms_8",
+        label: "Bagage retrouvé FR",
+        text: "Bonjour %%Case:Account:Name%%,\nBonne nouvelle ! Votre bagage %%Case:Bagage__r:Name%% du dossier %%Case:NumeroRequete__c%% a été retrouvé à %%Case:Escale__c%%. Il est pris en charge.\nAir Côte d’Ivoire vous remercie.",
+      },
+      {
+        id: "sms_9",
+        label: "Bagage embarqué FR",
+        text: "Bonjour %%Bagage__c:NomPassager__r:Name%%,\nNous vous confirmons que votre bagage %%Bagage__c:Name%% a été embarqué sur le vol %%Bagage__c:VolAcheminement__r:Name%% %%Bagage__c:RouteAcheminement__r:DepartureAirport__c%% %%Bagage__c:RouteAcheminement__r:ArivalAirport__c%%.\nAir Côte d’Ivoire vous remercie.",
+      },
+      {
+        id: "sms_10",
+        label: "Bagage arrivé à l’aéroport FR",
+        text: "Bonjour %%Case:Account:Name%%,\nVotre bagage est bien arrivé à %%Case:MarcheTech__c%%.\nNos équipes vous contacterons pour sa récupération.\nAir Côte d’Ivoire vous remercie.",
+      },
+      {
+        id: "sms_11",
+        label: "Confirmation récupération bagage FR",
+        text: "Bonjour %%Case:Account:Name%%,\nVotre bagage %%Case:Bagage__r:Name%% vous a bien été restitué.\nMerci pour votre patience !\nDonnez-nous votre avis ici : https://cloud.info.aircotedivoire.com/experience_post_reclamation?caseId=%%Case:Id%%.\nAir Côte d’Ivoire",
+      },
+      {
+        id: "sms_15",
+        label: "Bagage non embarqué FR",
+        text: "Bonjour %%Bagage__c:NomPassager__r:Name%%,\nVos bagages %%Bagage__c:Name%% n’ont malheureusement pas été embarqués sur le vol %%Bagage__c:Vol__r:Name%%.\nIls vous seront acheminés dès que possible.\nMerci de votre compréhension.\nAir Côte d’Ivoire",
+      },
+      {
+        id: "sms_18",
+        label: "Enquête satisfaction en agence FR",
+        text: "Bonjour %%FirstName%% %%LastName%%,\nMerci pour votre achat dans notre agence. Votre opinion compte : Partagez-nous votre avis en répondant à ce court questionnaire : https://cloud.info.aircotedivoire.com/experience_post_agence?compteId=%%Id%%.\nAir Côte d’Ivoire",
+      },
+      {
+        id: "sms_21",
+        label: "Après enregistrement FR",
+        text: "Bonjour %%FirstName%% %%LastName%%,\nNous espérons que votre enregistrement s’est bien déroulé !\nPartagez-nous votre expérience via ce court questionnaire : https://cloud.info.aircotedivoire.com/post_enregistrement?compteId=%%Id%%.\nMerci pour votre confiance.\nAir Côte d’Ivoire",
+      },
+      {
+        id: "sms_22",
+        label: "Après embarquement FR",
+        text: "Bonjour %%FirstName%% %%LastName%%,\nNous espérons que votre embarquement s’est bien déroulé !\nNous vous invitons à partager votre avis ici : https://cloud.info.aircotedivoire.com/post_embarquement?compteId=%%Id%%.\nMerci pour votre confiance.\nAir Côte d’Ivoire",
+      },
+      {
+        id: "sms_23",
+        label: "Après récupération bagages FR",
+        text: "Bonjour %%FirstName%% %%LastName%%,\nNous espérons que vos bagages ont été récupérés sans souci.\nPartagez votre avis en répondant à ce court questionnaire : https://cloud.info.aircotedivoire.com/experience_post_recuperation_bagage?compteId=%%Id%%.\nMerci pour votre confiance.\nAir Côte d’Ivoire",
+      },
+      {
+        id: "sms_24",
+        label: "Campagne générique FR",
+        text: "Bonjour %%CampaignMember:Name%%,\n%%CampaignMember:Campaign:SmsContent__c%%\nCordialement,\nL’équipe Air Côte d’Ivoire.",
+      },
+      {
+        id: "sms_25",
+        label: "Campagne générique EN",
+        text: "Dear %%CampaignMember:Name%%,\n%%CampaignMember:Campaign:SmsContent__c%%\nBest regards,\nThe Air Côte d’Ivoire team.",
+      },
     ],
     []
   ); // ne change jamais

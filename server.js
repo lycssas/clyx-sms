@@ -151,12 +151,13 @@ app.get("/recept", async (req, res) => {
     // const rec = await findLastPendingByPhone(to);
     // console.log("Looking for record with ID:", numberPart);
     const rec = await findLastPendingById(numberPart);
+
     if (!rec) {
       return res.sendStatus(200);
     }
 
-    const rep = await flushTrackingSMS({ id: rec.id, push_id, status });
-
+    const rep = await flushTrackingSMS({ id: rec.id, push_id, status, clientId: rec.sfmc_client_id, clientSecret: rec.sfmc_client_secret, subdomain: rec.sfmc_subdomain, accountId: rec.buid });
+    
     await updateDlrStatus({ id: rec.id, rawStatus: status, pushId: push_id });
 
     res.sendStatus(200); // Important : répondre 200 rapidement

@@ -56,9 +56,10 @@ export async function findLastPendingByPhone(phone) {
 
 export async function findLastPendingById(id) {
   const rows = await query(
-    `SELECT *
-       FROM sms_logs
-      WHERE id = $1`,
+    `SELECT s.id , s.buid, u.sfmc_client_id, u.sfmc_client_secret, u.sfmc_subdomain
+      FROM sms_logs s
+      JOIN users u ON s.buid = u.buid
+      WHERE s.id = $1`,
     [id]
   );
   return rows[0] || null;
@@ -72,7 +73,9 @@ export async function updateDlrStatus({ id, rawStatus, pushId }) {
         SET dlr_status_raw = $1,
             dlr_ok         = $2,
             push_id       = $3,
-            dlr_at         = now()
+            dlr_at         = now(),
+            pushed_sfmc    = true,
+            pushed_sfmc_at = now()
       WHERE id = $4`,
     [rawStatus, dlrOk, pushId, id]
   );
