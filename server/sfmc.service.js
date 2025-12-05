@@ -2,28 +2,39 @@ import dotenv from "dotenv";
 import axios from "axios";
 import { sendAdminAlertIncident } from "./monitoring.js";
 import { getSmsToTracking } from "./dbsquery.js";
+import CryptoJS from "crypto-js";
 dotenv.config();
 
-const {
-  MC_SUBDOMAIN,
-  MC_DEFINITION_KEY,
-  MC_CLIENT_ID,
-  MC_CLIENT_SECRET,
-  MC_ACCOUNT_ID,
-  MC_DE_TRACKING_SMS,
-} = process.env;
+const { MC_DE_TRACKING_SMS } = process.env;
 
-async function getMcToken() {
+const key = CryptoJS.enc.Utf8.parse(
+  "erJL5z9hrxOBJwfcJQHNMQeqeqUWoRuccYvNQal2iiE="
+);
+const iv = CryptoJS.enc.Utf8.parse("SBSaFCV9+aY9c+YkBNHhkw==");
+
+async function getMcToken(clientId, clientSecret, subdomain, accountId) {
   let token,
     tokenExp = 0;
   const now = Date.now();
   if (token && now < tokenExp) return token; // token encore valable
 
-  const url = `https://${MC_SUBDOMAIN}.auth.marketingcloudapis.com/v2/token`;
+  const clientIdDecrypted = CryptoJS.AES.decrypt(clientId, key, {
+    iv: iv,
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  });
+
+  const clientSecretDecrypted = CryptoJS.AES.decrypt(clientSecret, key, {
+    iv: iv,
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  });
+
+  const url = `https://${subdomain}.auth.marketingcloudapis.com/v2/token`;
   const { data } = await axios.post(url, {
-    client_id: MC_CLIENT_ID,
-    client_secret: MC_CLIENT_SECRET,
-    account_id: MC_ACCOUNT_ID,
+    client_id: clientIdDecrypted.toString(CryptoJS.enc.Utf8),
+    client_secret: clientSecretDecrypted.toString(CryptoJS.enc.Utf8),
+    account_id: accountId,
     grant_type: "client_credentials",
   });
 
@@ -32,17 +43,28 @@ async function getMcToken() {
   return token;
 }
 
-async function upsertRows(rows, deKey) {
+async function upsertRows(
+  rows,
+  deKey,
+  clientId,
+  clientSecret,
+  subdomain,
+  accountId
+) {
   try {
-    const accessToken = await getMcToken();
-    console.log("Access token obtained for SFMC : ", accessToken);
-    const url = `https://${MC_SUBDOMAIN}.rest.marketingcloudapis.com/data/v1/async/dataextensions/key:${deKey}/rows`;
+    const accessToken = await getMcToken(
+      clientId,
+      clientSecret,
+      subdomain,
+      accountId
+    );
+    const url = `https://${subdomain}.rest.marketingcloudapis.com/data/v1/async/dataextensions/key:${deKey}/rows`;
     const res = await axios.put(url, rows, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return res.data;
   } catch (err) {
-    console.log("Error upserting rows to SFMC: ", err);
+    // console.log("Error upserting rows to SFMC: ", err);
     const data = {
       app: "clyx-sms",
       status: "error",
@@ -60,11 +82,17 @@ async function upsertRows(rows, deKey) {
   }
 }
 
-export async function flushTrackingSMS({ id, push_id, status }) {
+export async function flushTrackingSMS({
+  id,
+  push_id,
+  status,
+  clientId,
+  clientSecret,
+  subdomain,
+  accountId,
+}) {
   try {
     const row = await getSmsToTracking({ id });
-
-    // console.log("Upsert tracking row :  ", row);
 
     if (!row) return;
 
@@ -91,15 +119,16 @@ export async function flushTrackingSMS({ id, push_id, status }) {
       ],
     };
 
-    console.log("Payload for SFMC tracking SMS: ", payload);
-
-    console.log("MC_DE_TRACKING_SMS: ", MC_DE_TRACKING_SMS);
-
-    const rep = await upsertRows(payload, MC_DE_TRACKING_SMS);
-
-    console.log("SFMC tracking SMS upsert response: ", rep);
+    const rep = await upsertRows(
+      payload,
+      MC_DE_TRACKING_SMS,
+      clientId,
+      clientSecret,
+      subdomain,
+      accountId
+    );
+    return rep;
   } catch (err) {
-    console.log("Error flushing tracking SMS to SFMC: ", err);
     const data = {
       app: "clyx-sms",
       status: "error",
