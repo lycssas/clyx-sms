@@ -12,6 +12,32 @@ const key = CryptoJS.enc.Utf8.parse(
 );
 const iv = CryptoJS.enc.Utf8.parse("SBSaFCV9+aY9c+YkBNHhkw==");
 
+function getDlrStatus(statusCode) {
+
+  switch (statusCode) {
+    case "4":
+      return "SENT";
+    case "6":
+      return "DELIVERED";
+    case "12":
+      return "EXPIRED";
+    case "13":
+      return "INVALID_PHONE";
+    case "14":
+      return "NETWORK_ERROR";
+    case "15":
+      return "ERROR_CREDIT";
+    case "16":
+      return "UNKNOWN";
+    case "23":
+      return "REJECTED";
+    case "2":
+      return "UNDELIVERED";
+    default:
+      return "FAILED";
+  }
+}
+
 async function getMcToken(clientId, clientSecret, subdomain, accountId) {
   let token,
     tokenExp = 0;
@@ -105,7 +131,7 @@ export async function flushTrackingSMS({
           TECH_SentAtUTC: row.TECH_SentAtUTC,
           IsDelivered: status === "6" ? true : false,
           DeliveryDateUTC: new Date().toISOString(),
-          DeliveryStatus: status === "6" ? "Delivered" : "Failed",
+          DeliveryStatus: getDlrStatus(status),
           MID: row.MID,
           ContactKey: row.ContactKey,
           JourneyId: row.JourneyId,
