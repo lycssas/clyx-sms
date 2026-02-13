@@ -112,6 +112,7 @@ export async function flushTrackingSMS({
   id,
   push_id,
   status,
+  smscount,
   clientId,
   clientSecret,
   subdomain,
@@ -141,6 +142,7 @@ export async function flushTrackingSMS({
           SmsName: row.SmsName,
           EventDateUtc: row.EventDateUtc,
           SmsId: row.SmsId,
+          SmsCount: smscount,
         },
       ],
     };
