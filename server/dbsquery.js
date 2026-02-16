@@ -66,13 +66,14 @@ export async function findLastPendingById(id) {
 }
 
 /** marquer DLR & prêt pour SFMC */
-export async function updateDlrStatus({ id, rawStatus, pushId }) {
+export async function updateDlrStatus({ id, rawStatus, pushId, smscount }) {
   const dlrOk = rawStatus === "6";
   const rep = await query(
     `UPDATE sms_logs
         SET dlr_status_raw = $1,
             dlr_ok         = $2,
             push_id       = $3,
+            sms_count     = $4,
             dlr_at         = now(),
             pushed_sfmc    = true,
             pushed_sfmc_at = now()

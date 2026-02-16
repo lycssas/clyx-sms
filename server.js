@@ -113,7 +113,7 @@ app.post("/execute", verifySfmcJwt, async (req, res) => {
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
       payload,
-      { timeout: 1200000 }
+      { timeout: 1200000 },
     );
 
     return res.status(200).json({ outArguments: [{ statusCode: "200" }] });
@@ -143,8 +143,9 @@ app.post("/execute", verifySfmcJwt, async (req, res) => {
 
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
-  // console.log("DLR received:");
-  const { push_id, to, ret_id, status } = req.query;
+  console.log("Test DLR received:");
+  console.log("Corps de la requete : ", req.query);
+  const { push_id, to, ret_id, status, smscount } = req.query;
 
   try {
     const numberPart = ret_id.split("_")[1];
@@ -152,13 +153,29 @@ app.get("/recept", async (req, res) => {
     // console.log("Looking for record with ID:", numberPart);
     const rec = await findLastPendingById(numberPart);
 
+    console.log("Record found for DLR:", rec);
+
     if (!rec) {
       return res.sendStatus(200);
     }
 
-    const rep = await flushTrackingSMS({ id: rec.id, push_id, status, clientId: rec.sfmc_client_id, clientSecret: rec.sfmc_client_secret, subdomain: rec.sfmc_subdomain, accountId: rec.buid });
-    
-    await updateDlrStatus({ id: rec.id, rawStatus: status, pushId: push_id });
+    const rep = await flushTrackingSMS({
+      id: rec.id,
+      push_id,
+      status,
+      smscount,
+      clientId: rec.sfmc_client_id,
+      clientSecret: rec.sfmc_client_secret,
+      subdomain: rec.sfmc_subdomain,
+      accountId: rec.buid,
+    });
+
+    await updateDlrStatus({
+      id: rec.id,
+      rawStatus: status,
+      pushId: push_id,
+      smscount: smscount,
+    });
 
     res.sendStatus(200); // Important : répondre 200 rapidement
   } catch (err) {
