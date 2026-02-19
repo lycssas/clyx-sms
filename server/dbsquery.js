@@ -13,12 +13,11 @@ export async function insertPending({
   campaignCode,
   smsName,
   smsId,
-  smsCount,
   eventDate,
 }) {
   const rows = await query(
-    `INSERT INTO sms_logs (contact_key, phone, message, push_id, buid, country_code, version_id, activity_id, journey_id, campaign_code, sms_name, sms_id, sms_count, sfmc_event_date)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+    `INSERT INTO sms_logs (contact_key, phone, message, push_id, buid, country_code, version_id, activity_id, journey_id, campaign_code, sms_name, sms_id, sfmc_event_date)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
      RETURNING id`,
     [
       contactKey,
@@ -33,7 +32,6 @@ export async function insertPending({
       campaignCode || null,
       smsName || null,
       smsId || null,
-      smsCount || null,
       eventDate || null,
     ]
   );
@@ -73,12 +71,12 @@ export async function updateDlrStatus({ id, rawStatus, pushId, smscount }) {
         SET dlr_status_raw = $1,
             dlr_ok         = $2,
             push_id       = $3,
-            sms_count     = $4,
+            sms_count     = $5,
             dlr_at         = now(),
             pushed_sfmc    = true,
             pushed_sfmc_at = now()
       WHERE id = $4`,
-    [rawStatus, dlrOk, pushId, id]
+    [rawStatus, dlrOk, pushId, id, smscount]
   );
 }
 

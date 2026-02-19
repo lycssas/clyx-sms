@@ -10,7 +10,7 @@
   "type": "REST",
   "lang": {
     "en-US": {
-      "name": "Clyx SMS",
+      "name": "Clyx App",
       "description": "Activité REST personnalisée pour envoyer des SMS via SFMC"
     }
   },

@@ -20,6 +20,7 @@ import { flushTrackingSMS } from "./server/sfmc.service.js";
 // import session from "express-session";
 import { verifySfmcJwt, initConfig } from "./server/sfmcconfig.js";
 
+
 const app = express();
 const PORT = process.env.PORT;
 
@@ -86,7 +87,7 @@ app.post("/execute", verifySfmcJwt, async (req, res) => {
       campaignCode: campaignCode,
       smsName: smsName,
       smsId: `SMS_${versionId}`,
-      smsCount: Math.max(1, Math.ceil(messageContent.length / 160)),
+      // smsCount: Math.max(1, Math.ceil(messageContent.length / 160)),
       eventDate: new Date().toISOString(),
     });
 
@@ -143,17 +144,14 @@ app.post("/execute", verifySfmcJwt, async (req, res) => {
 
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
-  console.log("Test DLR received:");
+  // console.log("Test DLR received:");
   console.log("Corps de la requete : ", req.query);
+
   const { push_id, to, ret_id, status, smscount } = req.query;
 
   try {
     const numberPart = ret_id.split("_")[1];
-    // const rec = await findLastPendingByPhone(to);
-    // console.log("Looking for record with ID:", numberPart);
     const rec = await findLastPendingById(numberPart);
-
-    console.log("Record found for DLR:", rec);
 
     if (!rec) {
       return res.sendStatus(200);
@@ -169,7 +167,7 @@ app.get("/recept", async (req, res) => {
       subdomain: rec.sfmc_subdomain,
       accountId: rec.buid,
     });
-
+    
     await updateDlrStatus({
       id: rec.id,
       rawStatus: status,
@@ -222,6 +220,7 @@ app.post("/stop", verifySfmcJwt, (req, res) => {
 
 // Route pour tester le serveur
 app.get("/status", (req, res) => {
+  console.log("Status endpoint called");
   res.status(200).json({
     status: "ok",
     message: "Orange SMS Activity Server is running",
@@ -230,6 +229,7 @@ app.get("/status", (req, res) => {
 });
 
 app.get("/ping", (_req, res) => {
+  console.log("Ping endpoint called");
   res.status(200).send("pong");
 });
 
@@ -237,8 +237,6 @@ app.get("/init", async (req, res) => {
   // Récupérer les configurations depuis la base
   await initConfig(req, res);
 });
-
-// console.log("Serving static files from:", buildDir);
 
 app.use(express.static(buildDir));
 // app.use(express.static(path.join(__dirname, "public")));
@@ -255,7 +253,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, "0.0.0.0", async () => {
   try {
     const rows = await query("SELECT NOW() AS now", []);
-    console.log("Database connection pool status:", rows);
+    console.log("Database connection pool status : ", rows);
     console.log(`Accédez à http://0.0.0.0:${PORT}/ pour votre custom activity`);
   } catch (err) {
     const data = {
