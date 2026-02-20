@@ -20,7 +20,6 @@ import { flushTrackingSMS } from "./server/sfmc.service.js";
 // import session from "express-session";
 import { verifySfmcJwt, initConfig } from "./server/sfmcconfig.js";
 
-
 const app = express();
 const PORT = process.env.PORT;
 
@@ -144,8 +143,6 @@ app.post("/execute", verifySfmcJwt, async (req, res) => {
 
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
-  // console.log("Test DLR received:");
-  console.log("Corps de la requete : ", req.query);
 
   const { push_id, to, ret_id, status, smscount } = req.query;
 
@@ -167,7 +164,7 @@ app.get("/recept", async (req, res) => {
       subdomain: rec.sfmc_subdomain,
       accountId: rec.buid,
     });
-    
+
     await updateDlrStatus({
       id: rec.id,
       rawStatus: status,
