@@ -86,7 +86,7 @@ app.post("/execute", verifySfmcJwt, async (req, res) => {
       campaignCode: campaignCode,
       smsName: smsName,
       smsId: `SMS_${versionId}`,
-      smsCount: Math.max(1, Math.ceil(messageContent.length / 160)),
+      // smsCount: Math.max(1, Math.ceil(messageContent.length / 160)),
       eventDate: new Date().toISOString(),
     });
 
@@ -113,7 +113,7 @@ app.post("/execute", verifySfmcJwt, async (req, res) => {
     const response = await axios.post(
       "https://lamsms.lafricamobile.com/api",
       payload,
-      { timeout: 1200000 }
+      { timeout: 1200000 },
     );
 
     return res.status(200).json({ outArguments: [{ statusCode: "200" }] });
@@ -143,22 +143,34 @@ app.post("/execute", verifySfmcJwt, async (req, res) => {
 
 // Route pour tester les accusés de réception
 app.get("/recept", async (req, res) => {
-  // console.log("DLR received:");
-  const { push_id, to, ret_id, status } = req.query;
+
+  const { push_id, to, ret_id, status, smscount } = req.query;
 
   try {
     const numberPart = ret_id.split("_")[1];
-    // const rec = await findLastPendingByPhone(to);
-    // console.log("Looking for record with ID:", numberPart);
     const rec = await findLastPendingById(numberPart);
 
     if (!rec) {
       return res.sendStatus(200);
     }
 
-    const rep = await flushTrackingSMS({ id: rec.id, push_id, status, clientId: rec.sfmc_client_id, clientSecret: rec.sfmc_client_secret, subdomain: rec.sfmc_subdomain, accountId: rec.buid });
-    
-    await updateDlrStatus({ id: rec.id, rawStatus: status, pushId: push_id });
+    const rep = await flushTrackingSMS({
+      id: rec.id,
+      push_id,
+      status,
+      smscount,
+      clientId: rec.sfmc_client_id,
+      clientSecret: rec.sfmc_client_secret,
+      subdomain: rec.sfmc_subdomain,
+      accountId: rec.buid,
+    });
+
+    await updateDlrStatus({
+      id: rec.id,
+      rawStatus: status,
+      pushId: push_id,
+      smscount: smscount,
+    });
 
     res.sendStatus(200); // Important : répondre 200 rapidement
   } catch (err) {
@@ -205,6 +217,7 @@ app.post("/stop", verifySfmcJwt, (req, res) => {
 
 // Route pour tester le serveur
 app.get("/status", (req, res) => {
+  console.log("Status endpoint called");
   res.status(200).json({
     status: "ok",
     message: "Orange SMS Activity Server is running",
@@ -213,6 +226,7 @@ app.get("/status", (req, res) => {
 });
 
 app.get("/ping", (_req, res) => {
+  console.log("Ping endpoint called");
   res.status(200).send("pong");
 });
 
@@ -220,8 +234,6 @@ app.get("/init", async (req, res) => {
   // Récupérer les configurations depuis la base
   await initConfig(req, res);
 });
-
-// console.log("Serving static files from:", buildDir);
 
 app.use(express.static(buildDir));
 // app.use(express.static(path.join(__dirname, "public")));
@@ -238,7 +250,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, "0.0.0.0", async () => {
   try {
     const rows = await query("SELECT NOW() AS now", []);
-    console.log("Database connection pool status:", rows);
+    console.log("Database connection pool status : ", rows);
     console.log(`Accédez à http://0.0.0.0:${PORT}/ pour votre custom activity`);
   } catch (err) {
     const data = {

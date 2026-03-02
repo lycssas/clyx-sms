@@ -9,30 +9,31 @@ const { MONITORING_ADD_1, MONITORING_ADD_2 } = process.env;
 // import { upsertUrl, linkUrlToSms } from "./shortnerfunctions.js";
 
 const mapCountryToPrefix = [
-  { code: "FR", prefix: "+33" },
-  { code: "SN", prefix: "+221" },
-  { code: "CI", prefix: "+225" },
-  { code: "ML", prefix: "+223" },
-  { code: "BF", prefix: "+226" },
-  { code: "TG", prefix: "+228" },
-  { code: "BJ", prefix: "+229" },
-  { code: "GC", prefix: "+224" },
-  { code: "GB", prefix: "+245" },
-  { code: "MA", prefix: "+212" },
-  { code: "GH", prefix: "+233" },
-  { code: "NG", prefix: "+234" },
-  { code: "NE", prefix: "+227" },
-  { code: "CM", prefix: "+237" },
-  { code: "GA", prefix: "+241" },
-  { code: "CG", prefix: "+242" },
-  { code: "RC", prefix: "+243" },
-  { code: "ZA", prefix: "+27" }, // Afrique du Sud
-  { code: "LR", prefix: "+231" }, // Libéria
-  { code: "CH", prefix: "+41" }, // Suisse
-  { code: "UK", prefix: "+44" }, // Angleterre (Royaume-Uni)
-  { code: "LB", prefix: "+961" }, // Liban
-  { code: "US", prefix: "+1" }, // États-Unis
+  { code: "FR", prefix: "+33" }, // France
+  { code: "SN", prefix: "+221" }, // Senegal
+  { code: "CI", prefix: "+225" }, // Ivory Coast
+  { code: "ML", prefix: "+223" }, // Mali
+  { code: "BF", prefix: "+226" }, // Burkina Faso
+  { code: "TG", prefix: "+228" }, // Togo
+  { code: "BJ", prefix: "+229" }, // Benin
+  { code: "GN", prefix: "+224" }, // Guinea
+  { code: "GW", prefix: "+245" }, // Guinea-Bissau
+  { code: "MA", prefix: "+212" }, // Morocco
+  { code: "GH", prefix: "+233" }, // Ghana
+  { code: "NG", prefix: "+234" }, // Nigeria
+  { code: "NE", prefix: "+227" }, // Niger
+  { code: "CM", prefix: "+237" }, // Cameroon
+  { code: "GA", prefix: "+241" }, // Gabon
+  { code: "CG", prefix: "+242" }, // Republic of the Congo
+  { code: "CD", prefix: "+243" }, // Democratic Republic of the Congo
+  { code: "ZA", prefix: "+27" }, // South Africa
+  { code: "LR", prefix: "+231" }, // Liberia
+  { code: "CH", prefix: "+41" }, // Switzerland
+  { code: "GB", prefix: "+44" }, // United Kingdom
+  { code: "LB", prefix: "+961" }, // Lebanon
+  { code: "US", prefix: "+1" }, // United States
 ];
+
 
 // Cette fonction prend un numero de telephone et retourne le code pays correspondant en se bassant sur le map mapCountryToPrefix
 export function getCountryPrefix(phone) {

@@ -8,12 +8,11 @@ dotenv.config();
 const { MC_DE_TRACKING_SMS } = process.env;
 
 const key = CryptoJS.enc.Utf8.parse(
-  "erJL5z9hrxOBJwfcJQHNMQeqeqUWoRuccYvNQal2iiE="
+  "erJL5z9hrxOBJwfcJQHNMQeqeqUWoRuccYvNQal2iiE=",
 );
 const iv = CryptoJS.enc.Utf8.parse("SBSaFCV9+aY9c+YkBNHhkw==");
 
 function getDlrStatus(statusCode) {
-
   switch (statusCode) {
     case "4":
       return "SENT";
@@ -75,14 +74,14 @@ async function upsertRows(
   clientId,
   clientSecret,
   subdomain,
-  accountId
+  accountId,
 ) {
   try {
     const accessToken = await getMcToken(
       clientId,
       clientSecret,
       subdomain,
-      accountId
+      accountId,
     );
     const url = `https://${subdomain}.rest.marketingcloudapis.com/data/v1/async/dataextensions/key:${deKey}/rows`;
     const res = await axios.put(url, rows, {
@@ -112,6 +111,7 @@ export async function flushTrackingSMS({
   id,
   push_id,
   status,
+  smscount,
   clientId,
   clientSecret,
   subdomain,
@@ -141,6 +141,7 @@ export async function flushTrackingSMS({
           SmsName: row.SmsName,
           EventDateUtc: row.EventDateUtc,
           SmsId: row.SmsId,
+          SmsCount: smscount,
         },
       ],
     };
@@ -151,7 +152,7 @@ export async function flushTrackingSMS({
       clientId,
       clientSecret,
       subdomain,
-      accountId
+      accountId,
     );
     return rep;
   } catch (err) {
